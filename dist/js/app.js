@@ -76,6 +76,9 @@ function switchTab(tabId) {
   document.querySelectorAll('.tab-panel').forEach(p => {
     p.classList.toggle('active', p.id === tabId);
   });
+  if (tabId === 'tab-cohort') {
+    renderCohortAnalytics();
+  }
 }
 
 // Setup Event Listeners
