@@ -231,3 +231,45 @@ Acute and chronic adverse events, shunt malfunctions, and surgical revisions.
 | `malfunction_reason` | TEXT | Proximal catheter block, valve debris, distal obstruction, fracture |
 | `repeat_surgery_required` | TEXT | Proximal revision, valve swap, distal revision, complete shunt, ETV |
 | `outcome` | TEXT | Post-revision resolution status |
+
+---
+
+### Table: `revision_shunt_surgeries`
+Log of operative shunt revisions, component swaps, anti-gravity valve additions, and catheter repositioning.
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `id` | TEXT PK | Unique revision surgery record ID |
+| `patient_id` | TEXT FK | References `patients.id` |
+| `surgery_date` | TEXT | Date of revision surgery |
+| `lead_surgeon` | TEXT | Primary operating neurosurgeon |
+| `assistant_surgeon` | TEXT | Assistant neurosurgeon / registrar |
+| `revision_indication` | TEXT | Proximal occlusion, valve clogging, distal block, overdrainage, infection, etc. |
+| `components_revised` | TEXT | Proximal, valve, anti-gravity unit, distal, complete system, EVD, secondary ETV |
+| `cranial_entry_site` | TEXT | Same Kocher burr hole, contralateral, Keen point, new entry |
+| `new_hardware_model` | TEXT | New valve model (e.g. Miethke proGAV 2.0 with proSA) |
+| `new_differential_setting`| TEXT | Differential pressure setting (e.g. 12 cmH2O) |
+| `new_antigravity_setting` | TEXT | Anti-gravity valve setting (e.g. 25 cmH2O) |
+| `new_catheter_type` | TEXT | Bactiseal, Silverline, standard |
+| `csf_microbiology_sent` | INTEGER | Boolean flag: intraoperative CSF sent for microscopy & culture |
+| `operative_findings` | TEXT | Intraoperative CSF appearance, flow, tissue ingrowth, hardware status |
+| `immediate_outcome` | TEXT | Post-operative CT, resolution of malfunction, discharge course |
+
+---
+
+### Table: `other_surgeries`
+Log of non-shunt neurosurgical, spinal, abdominal, and reconstructive procedures.
+
+| Field Name | Type | Description |
+| :--- | :--- | :--- |
+| `id` | TEXT PK | Unique procedure record ID |
+| `patient_id` | TEXT FK | References `patients.id` |
+| `procedure_date` | TEXT | Date of surgical procedure |
+| `procedure_name` | TEXT | Procedure title (e.g. Burr Hole Evacuation of Subdural Hygroma / Hematoma) |
+| `surgical_category` | TEXT | Cranial, spine, abdominal surgery, interventional radiology, wound repair |
+| `lead_surgeon` | TEXT | Operating surgeon / interventionalist |
+| `anesthesia_type` | TEXT | General anesthesia, local + sedation, local |
+| `indication` | TEXT | Clinical rationale and mass effect / pathology treated |
+| `operative_summary` | TEXT | Operative technique and intraoperative findings |
+| `complications` | TEXT | Procedural complications (bleeding, infection, CSF leak) |
+| `clinical_outcome` | TEXT | Resolution status, brain re-expansion, follow-up plan |

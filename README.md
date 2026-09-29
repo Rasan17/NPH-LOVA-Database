@@ -51,7 +51,11 @@ Engineered with a **Tauri v2** desktop framework backed by **Rust** and **SQLite
 - Lumbar infusion study metrics ($R_{out}$, $P_0$, PVI, Lundberg $B$-waves).
 - Continuous external lumbar drainage (ELD) protocol and laboratory CSF analysis.
 
-### 8. Diversionary Surgery & Shunt Hardware
+### 8. Diversionary Surgery, Shunt Hardware, Revisions & Other Surgeries
+- **Primary Diversionary Procedures**: Ventriculoperitoneal (VP), Lumboperitoneal (LP), Ventriculoatrial (VA), Ventriculopleural, Endoscopic Third Ventriculostomy (ETV), and ETV with disruption of prepontine arachnoid membranes (Membrane of Liliequist).
+- **Shunt Hardware & Settings**: Programmable valve models, initial differential pressure setting, and initial anti-gravity valve setting (e.g. 20 cmH2O).
+- **Dedicated '+ Revision Shunt Surgery' Button & Log**: Record proximal/distal catheter revisions, valve unit replacements, anti-gravity valve additions, secondary ETV, microbiological CSF cultures, and operative findings.
+- **Dedicated '+ Other Surgery' Button & Log**: Capture cranial procedures (e.g. burr hole evacuation of subdural hygromas/hematomas), arachnoid cyst fenestrations, abdominal adhesiolysis, spinal decompression, or wound interventions.
 - Treatment modalities: Ventriculoperitoneal (VP), Lumboperitoneal (LP), Ventriculoatrial (VA), Ventriculopleural, Endoscopic Third Ventriculostomy (ETV), and **ETV with disruption of prepontine arachnoid membranes (Membrane of Liliequist)**.
 - Shunt hardware inventory: Manufacturer (Miethke, Codman, Medtronic, Sophysa, Integra), valve model, catheter type, initial differential pressure setting, and **initial anti-gravity valve setting** (e.g. $20	ext{ cmH}_2	ext{O}$).
 

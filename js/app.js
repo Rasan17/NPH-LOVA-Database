@@ -11,6 +11,8 @@ window.AppState = {
   adjustmentsList: [],
   reviewsList: [],
   complicationsList: [],
+  revisionSurgeriesList: [],
+  otherSurgeriesList: [],
   theme: localStorage.getItem('nph_lova_theme') || 'dark'
 };
 
@@ -120,6 +122,40 @@ function setupEventListeners() {
   document.getElementById('form-modal-adjustment')?.addEventListener('submit', handleAdjustmentSubmit);
   document.getElementById('form-modal-review')?.addEventListener('submit', handleReviewSubmit);
   document.getElementById('form-modal-complication')?.addEventListener('submit', handleComplicationSubmit);
+  document.getElementById('form-modal-revision-surgery')?.addEventListener('submit', handleRevisionSurgerySubmit);
+  document.getElementById('form-modal-other-surgery')?.addEventListener('submit', handleOtherSurgerySubmit);
+
+  // Revision & Other Surgery Buttons
+  const openRevModal = () => {
+    if (!AppState.activePatientId) {
+      alert('Please select or save a patient first.');
+      return;
+    }
+    const p = AppState.activePatientData;
+    setVal('m-revsurg-date', new Date().toISOString().split('T')[0]);
+    setVal('m-revsurg-surgeon', p?.surg_operating_surgeon || p?.consultant_surgeon || '');
+    setVal('m-revsurg-new-hardware', p?.shunt_model || '');
+    setVal('m-revsurg-new-dp', p?.shunt_initial_dp || '');
+    setVal('m-revsurg-new-ag', p?.shunt_initial_ag || '');
+    openModal('modal-revision-surgery');
+  };
+
+  const openOthModal = () => {
+    if (!AppState.activePatientId) {
+      alert('Please select or save a patient first.');
+      return;
+    }
+    const p = AppState.activePatientData;
+    setVal('m-othsurg-date', new Date().toISOString().split('T')[0]);
+    setVal('m-othsurg-surgeon', p?.surg_operating_surgeon || p?.consultant_surgeon || '');
+    openModal('modal-other-surgery');
+  };
+
+  document.getElementById('btn-open-revision-modal')?.addEventListener('click', openRevModal);
+  document.getElementById('btn-table-add-revision')?.addEventListener('click', openRevModal);
+
+  document.getElementById('btn-open-other-surgery-modal')?.addEventListener('click', openOthModal);
+  document.getElementById('btn-table-add-other-surgery')?.addEventListener('click', openOthModal);
 
   // Open Modal Buttons
   document.getElementById('btn-open-adjustment-modal')?.addEventListener('click', () => {
@@ -664,6 +700,8 @@ async function loadPatient(id) {
   await loadPatientAdjustments(id);
   await loadPatientReviews(id);
   await loadPatientComplications(id);
+  await loadPatientRevisionSurgeries(id);
+  await loadPatientOtherSurgeries(id);
 }
 
 function resetPatientForm() {
@@ -689,6 +727,10 @@ function resetPatientForm() {
   document.getElementById('tbody-adjustments').innerHTML = '<tr><td colspan="9" class="text-center text-secondary">No adjustments recorded for this new patient.</td></tr>';
   document.getElementById('tbody-reviews').innerHTML = '<tr><td colspan="10" class="text-center text-secondary">No reviews recorded.</td></tr>';
   document.getElementById('tbody-complications').innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No complications recorded.</td></tr>';
+  const revBody = document.getElementById('tbody-revision-surgeries');
+  if (revBody) revBody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No revision shunt surgeries recorded.</td></tr>';
+  const othBody = document.getElementById('tbody-other-surgeries');
+  if (othBody) othBody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No other surgeries recorded.</td></tr>';
 
   calculateRadscale();
   calculateTapTest();
@@ -752,6 +794,139 @@ async function loadPatientReviews(patientId) {
     </tr>
   `).join('');
 }
+
+
+// Child Table Loaders: Revision Shunt Surgeries
+async function loadPatientRevisionSurgeries(patientId) {
+  const revs = await DatabaseAdapter.getRevisionSurgeriesForPatient(patientId);
+  AppState.revisionSurgeriesList = revs;
+  const tbody = document.getElementById('tbody-revision-surgeries');
+  if (!tbody) return;
+
+  if (revs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No revision shunt surgeries recorded for this patient.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = revs.map(r => `
+    <tr>
+      <td class="font-mono">${r.surgery_date}</td>
+      <td><span class="badge badge-amber font-semibold">${escapeHtml(r.revision_indication)}</span></td>
+      <td><strong>${escapeHtml(r.components_revised)}</strong></td>
+      <td class="font-mono text-xs">
+        ${escapeHtml(r.new_hardware_model || '--')} 
+        ${r.new_differential_setting ? `(DP: ${escapeHtml(r.new_differential_setting)})` : ''} 
+        ${r.new_antigravity_setting ? `(AG: ${escapeHtml(r.new_antigravity_setting)})` : ''}
+      </td>
+      <td>${escapeHtml(r.lead_surgeon || '--')}</td>
+      <td>${escapeHtml(r.operative_findings || r.immediate_outcome || '--')}</td>
+      <td>
+        <button class="btn btn-ghost btn-xs text-danger" onclick="deleteRevisionSurgery('${r.id}')">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Child Table Loaders: Other Surgeries
+async function loadPatientOtherSurgeries(patientId) {
+  const oths = await DatabaseAdapter.getOtherSurgeriesForPatient(patientId);
+  AppState.otherSurgeriesList = oths;
+  const tbody = document.getElementById('tbody-other-surgeries');
+  if (!tbody) return;
+
+  if (oths.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">No other surgeries or procedures recorded for this patient.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = oths.map(o => `
+    <tr>
+      <td class="font-mono">${o.procedure_date}</td>
+      <td><strong>${escapeHtml(o.procedure_name)}</strong></td>
+      <td><span class="badge badge-secondary">${escapeHtml(o.surgical_category)}</span></td>
+      <td>${escapeHtml(o.lead_surgeon || '--')}</td>
+      <td>${escapeHtml(o.indication || '--')}</td>
+      <td>${escapeHtml(o.clinical_outcome || o.complications || '--')}</td>
+      <td>
+        <button class="btn btn-ghost btn-xs text-danger" onclick="deleteOtherSurgery('${o.id}')">Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Modal Handlers: Revision Surgery Submit
+async function handleRevisionSurgerySubmit(e) {
+  e.preventDefault();
+  if (!AppState.activePatientId) return;
+
+  const newRev = {
+    id: `revsurg-${Date.now()}`,
+    patient_id: AppState.activePatientId,
+    surgery_date: getVal('m-revsurg-date'),
+    lead_surgeon: getVal('m-revsurg-surgeon'),
+    assistant_surgeon: getVal('m-revsurg-assistant'),
+    revision_indication: getVal('m-revsurg-indication'),
+    components_revised: getVal('m-revsurg-components'),
+    cranial_entry_site: getVal('m-revsurg-cranial-entry'),
+    new_hardware_model: getVal('m-revsurg-new-hardware'),
+    new_differential_setting: getVal('m-revsurg-new-dp'),
+    new_antigravity_setting: getVal('m-revsurg-new-ag'),
+    new_catheter_type: getVal('m-revsurg-catheter-type'),
+    csf_microbiology_sent: getBool('m-revsurg-csf-microbiology'),
+    operative_findings: getVal('m-revsurg-findings'),
+    immediate_outcome: getVal('m-revsurg-outcome')
+  };
+
+  const success = await DatabaseAdapter.saveRevisionSurgery(newRev);
+  if (success) {
+    closeModal('modal-revision-surgery');
+    document.getElementById('form-modal-revision-surgery').reset();
+    await loadPatientRevisionSurgeries(AppState.activePatientId);
+    showNotification('Revision shunt surgery recorded.', 'warning');
+  }
+}
+
+window.deleteRevisionSurgery = async (id) => {
+  if (confirm('Delete this revision surgery record?')) {
+    await DatabaseAdapter.deleteRevisionSurgery(id);
+    await loadPatientRevisionSurgeries(AppState.activePatientId);
+  }
+};
+
+// Modal Handlers: Other Surgery Submit
+async function handleOtherSurgerySubmit(e) {
+  e.preventDefault();
+  if (!AppState.activePatientId) return;
+
+  const newOth = {
+    id: `othsurg-${Date.now()}`,
+    patient_id: AppState.activePatientId,
+    procedure_date: getVal('m-othsurg-date'),
+    surgical_category: getVal('m-othsurg-category'),
+    procedure_name: getVal('m-othsurg-name'),
+    lead_surgeon: getVal('m-othsurg-surgeon'),
+    anesthesia_type: getVal('m-othsurg-anesthesia'),
+    indication: getVal('m-othsurg-indication'),
+    operative_summary: getVal('m-othsurg-summary'),
+    complications: getVal('m-othsurg-complications'),
+    clinical_outcome: getVal('m-othsurg-outcome')
+  };
+
+  const success = await DatabaseAdapter.saveOtherSurgery(newOth);
+  if (success) {
+    closeModal('modal-other-surgery');
+    document.getElementById('form-modal-other-surgery').reset();
+    await loadPatientOtherSurgeries(AppState.activePatientId);
+    showNotification('Other surgery / procedure recorded.', 'success');
+  }
+}
+
+window.deleteOtherSurgery = async (id) => {
+  if (confirm('Delete this surgery / procedure record?')) {
+    await DatabaseAdapter.deleteOtherSurgery(id);
+    await loadPatientOtherSurgeries(AppState.activePatientId);
+  }
+};
 
 // Child Table Loaders: Complications
 async function loadPatientComplications(patientId) {

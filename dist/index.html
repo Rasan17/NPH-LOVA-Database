@@ -1051,9 +1051,21 @@
 
       <!-- TAB 7: SURGERY & SHUNT HARDWARE -->
       <section class="tab-panel" id="tab-treatment">
-        <div class="panel-header">
-          <h2>Surgical Treatment & Shunt Hardware Specifications</h2>
-          <p class="panel-description">Detailed documentation of diversionary procedures (VP, LP, VA, Ventriculopleural, ETV, disruption of prepontine membranes), valve hardware, initial differential and initial anti-gravity settings.</p>
+        <div class="panel-header-flex">
+          <div>
+            <h2>Surgical Treatment & Shunt Hardware Specifications</h2>
+            <p class="panel-description">Detailed documentation of primary diversionary procedures (VP, LP, VA, Ventriculopleural, ETV, disruption of prepontine membranes), valve hardware, initial differential and anti-gravity settings, plus revision shunt surgeries and other collateral procedures.</p>
+          </div>
+          <div class="header-btn-group">
+            <button type="button" id="btn-open-revision-modal" class="btn btn-warning">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+              + Revision Shunt Surgery
+            </button>
+            <button type="button" id="btn-open-other-surgery-modal" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+              + Other Surgery
+            </button>
+          </div>
         </div>
 
         <form id="form-treatment" class="grid-form">
@@ -1191,6 +1203,70 @@
             </div>
           </div>
         </form>
+
+        <!-- Revision Shunt Surgeries Log Card -->
+        <div class="card grid-span-12 card-highlight-amber mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Revision Shunt Surgeries Log</h3>
+              <p class="card-subtitle">Chronological record of revision procedures, proximal/distal catheter replacements, valve unit swaps, and anti-gravity unit additions.</p>
+            </div>
+            <button type="button" class="btn btn-warning btn-sm" id="btn-table-add-revision">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Record Revision Surgery
+            </button>
+          </div>
+          <div class="table-responsive mt-3">
+            <table class="data-table" id="table-revision-surgeries">
+              <thead>
+                <tr>
+                  <th>Surgery Date</th>
+                  <th>Indication / Malfunction Reason</th>
+                  <th>Components Revised</th>
+                  <th>New Hardware & Settings</th>
+                  <th>Lead Surgeon</th>
+                  <th>Operative Findings / Outcome</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-revision-surgeries">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Other Collateral Surgeries & Procedures Log Card -->
+        <div class="card grid-span-12 mt-4">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Other Collateral Surgeries & Procedures Log</h3>
+              <p class="card-subtitle">Document craniotomies / burr hole evacuations (e.g. subdural collections), arachnoid cyst fenestrations, abdominal adhesiolysis, spinal decompression, or wound interventions.</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-table-add-other-surgery">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Record Other Surgery
+            </button>
+          </div>
+          <div class="table-responsive mt-3">
+            <table class="data-table" id="table-other-surgeries">
+              <thead>
+                <tr>
+                  <th>Procedure Date</th>
+                  <th>Procedure Name / Title</th>
+                  <th>Surgical Category</th>
+                  <th>Operating Surgeon</th>
+                  <th>Clinical Indication</th>
+                  <th>Complications / Outcome</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-other-surgeries">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <!-- TAB 8: SHUNT ADJUSTMENTS LOG -->
@@ -1829,6 +1905,202 @@
     </div>
 
   </div>
+
+
+    <!-- Modal: Revision Shunt Surgery -->
+    <div class="modal-backdrop" id="modal-revision-surgery" style="display:none;">
+      <div class="modal-dialog modal-dialog-lg">
+        <div class="modal-header">
+          <h3 class="modal-title">Record Revision Shunt Surgery</h3>
+          <button type="button" class="modal-close-btn" data-close-modal="modal-revision-surgery">&times;</button>
+        </div>
+        <form id="form-modal-revision-surgery">
+          <div class="modal-body">
+            <div class="form-grid grid-cols-2">
+              <div class="form-group">
+                <label for="m-revsurg-date">Revision Surgery Date*</label>
+                <input type="date" id="m-revsurg-date" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="m-revsurg-surgeon">Lead Operating Surgeon*</label>
+                <input type="text" id="m-revsurg-surgeon" class="form-control" required placeholder="Surgeon name" />
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-revsurg-indication">Revision Indication / Etiology*</label>
+                <select id="m-revsurg-indication" class="form-control font-semibold" required>
+                  <option value="Proximal Ventricular Catheter Obstruction (Choroid Plexus Ingrowth)">Proximal Ventricular Catheter Obstruction (Choroid Plexus Ingrowth)</option>
+                  <option value="Valve Unit Malfunction / Occlusion by Debris">Valve Unit Malfunction / Occlusion by Debris</option>
+                  <option value="Distal Peritoneal Catheter Migration / Fracture / Kinking">Distal Peritoneal Catheter Migration / Fracture / Kinking</option>
+                  <option value="Overdrainage Complication (Subdural Hygroma / Hematoma)">Overdrainage Complication (Subdural Hygroma / Hematoma)</option>
+                  <option value="Slit Ventricle Syndrome">Slit Ventricle Syndrome</option>
+                  <option value="Anti-Gravity Valve Sticking / Positional Malfunction">Anti-Gravity Valve Sticking / Positional Malfunction</option>
+                  <option value="Shunt Infection / Ventriculitis (requires removal / EVD)">Shunt Infection / Ventriculitis (requires removal / EVD)</option>
+                  <option value="Peritoneal Pseudocyst / Poor Abdominal Absorption">Peritoneal Pseudocyst / Poor Abdominal Absorption</option>
+                  <option value="Skin Breakdown / Hardware Erosion">Skin Breakdown / Hardware Erosion</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-revsurg-components">Components Revised / Surgical Action*</label>
+                <select id="m-revsurg-components" class="form-control font-semibold" required>
+                  <option value="Proximal Ventricular Catheter Revision Only">Proximal Ventricular Catheter Revision Only</option>
+                  <option value="Valve Replacement / Upgraded Unit">Valve Replacement / Upgraded Unit</option>
+                  <option value="Anti-Gravity Unit Added / Replaced (e.g. added proSA)">Anti-Gravity Unit Added / Replaced (e.g. added proSA)</option>
+                  <option value="Distal Catheter Revision / Relocation (e.g. Peritoneal to Pleural/Atrial)">Distal Catheter Revision / Relocation (e.g. Peritoneal to Pleural/Atrial)</option>
+                  <option value="Complete Shunt System Replacement">Complete Shunt System Replacement</option>
+                  <option value="Shunt Removal & External Ventricular Drain (EVD) Conversion">Shunt Removal & External Ventricular Drain (EVD) Conversion</option>
+                  <option value="Secondary ETV after Shunt Malfunction">Secondary ETV after Shunt Malfunction</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="m-revsurg-cranial-entry">Cranial Entry Site</label>
+                <select id="m-revsurg-cranial-entry" class="form-control">
+                  <option value="Right Frontal (Same Kocher's Point)">Right Frontal (Same Kocher's Point)</option>
+                  <option value="Left Frontal (Contralateral Kocher's Point)">Left Frontal (Contralateral Kocher's Point)</option>
+                  <option value="Right Parieto-occipital (Keen's Point)">Right Parieto-occipital (Keen's Point)</option>
+                  <option value="New Cranial Burr Hole">New Cranial Burr Hole</option>
+                  <option value="No Cranial Re-entry (Distal/Valve Only)">No Cranial Re-entry (Distal/Valve Only)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="m-revsurg-assistant">Assistant Surgeon / Registrar</label>
+                <input type="text" id="m-revsurg-assistant" class="form-control" placeholder="Assistant name" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-revsurg-new-hardware">New Hardware Installed (Model)</label>
+                <input type="text" id="m-revsurg-new-hardware" class="form-control" placeholder="e.g. Miethke proGAV 2.0 with proSA" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-revsurg-catheter-type">Catheter Type</label>
+                <select id="m-revsurg-catheter-type" class="form-control">
+                  <option value="Bactiseal (Rifampicin/Clindamycin)">Bactiseal (Rifampicin/Clindamycin)</option>
+                  <option value="Silverline (Silver impregnated)">Silverline (Silver impregnated)</option>
+                  <option value="Standard Barium Impregnated Silicone">Standard Barium Impregnated Silicone</option>
+                  <option value="Unchanged / Not Replaced">Unchanged / Not Replaced</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="m-revsurg-new-dp">New Differential Setting</label>
+                <input type="text" id="m-revsurg-new-dp" class="form-control font-mono" placeholder="e.g. 12 cmH2O" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-revsurg-new-ag">New Anti-Gravity Setting</label>
+                <input type="text" id="m-revsurg-new-ag" class="form-control font-mono" placeholder="e.g. 25 cmH2O" />
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label class="checkbox-row">
+                  <input type="checkbox" id="m-revsurg-csf-microbiology">
+                  <span><strong>Intraoperative CSF Sent for Microscopy & Culture (Gram stain, cell count, aerobic/anaerobic)</strong></span>
+                </label>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-revsurg-findings">Operative Findings & CSF Appearance</label>
+                <textarea id="m-revsurg-findings" class="form-control" rows="2" placeholder="Record intraoperative CSF flow, bleeding, choroid plexus attachment, hardware condition..."></textarea>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-revsurg-outcome">Immediate Post-Op Course & Plan</label>
+                <textarea id="m-revsurg-outcome" class="form-control" rows="2" placeholder="Post-operative CT findings, resolution of overdrainage/obstruction, hospital discharge plan..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-modal="modal-revision-surgery">Cancel</button>
+            <button type="submit" class="btn btn-warning">Save Revision Surgery</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Other Surgery / Procedure -->
+    <div class="modal-backdrop" id="modal-other-surgery" style="display:none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">Record Other Surgery or Collateral Procedure</h3>
+          <button type="button" class="modal-close-btn" data-close-modal="modal-other-surgery">&times;</button>
+        </div>
+        <form id="form-modal-other-surgery">
+          <div class="modal-body">
+            <div class="form-grid grid-cols-2">
+              <div class="form-group">
+                <label for="m-othsurg-date">Procedure Date*</label>
+                <input type="date" id="m-othsurg-date" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="m-othsurg-category">Surgical Category*</label>
+                <select id="m-othsurg-category" class="form-control font-semibold" required>
+                  <option value="Neurosurgery - Cranial">Neurosurgery - Cranial</option>
+                  <option value="Neurosurgery - Spine">Neurosurgery - Spine</option>
+                  <option value="General / Abdominal Surgery">General / Abdominal Surgery</option>
+                  <option value="Interventional Radiology">Interventional Radiology</option>
+                  <option value="Plastic / Wound Reconstruction">Plastic / Wound Reconstruction</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-othsurg-name">Procedure Title / Name*</label>
+                <input type="text" id="m-othsurg-name" class="form-control font-bold" required placeholder="e.g. Burr Hole Evacuation of Subdural Hematoma / Collection" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-othsurg-surgeon">Operating Surgeon / Interventionalist*</label>
+                <input type="text" id="m-othsurg-surgeon" class="form-control" required placeholder="Surgeon name" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-othsurg-anesthesia">Anesthesia Type</label>
+                <select id="m-othsurg-anesthesia" class="form-control">
+                  <option value="General Anesthesia">General Anesthesia</option>
+                  <option value="Local Anesthesia + Sedation">Local Anesthesia + Sedation</option>
+                  <option value="Local Anesthesia Only">Local Anesthesia Only</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-othsurg-indication">Clinical Indication & Rationale*</label>
+                <input type="text" id="m-othsurg-indication" class="form-control" required placeholder="e.g. Progressive symptomatic right-sided subdural hygroma with 11mm midline shift" />
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-othsurg-summary">Operative Summary & Findings</label>
+                <textarea id="m-othsurg-summary" class="form-control" rows="2" placeholder="Details of procedure performed, anatomical landmarks, fluid drained, hardware inspected..."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="m-othsurg-complications">Complications</label>
+                <select id="m-othsurg-complications" class="form-control">
+                  <option value="None / Uneventful">None / Uneventful</option>
+                  <option value="Minor Bleeding">Minor Bleeding</option>
+                  <option value="Wound Infection">Wound Infection</option>
+                  <option value="CSF Fistula / Leak">CSF Fistula / Leak</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="m-othsurg-outcome">Clinical Outcome & Follow-Up</label>
+                <input type="text" id="m-othsurg-outcome" class="form-control" placeholder="e.g. Complete re-expansion of brain; discharged on day 1 post-op" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-modal="modal-other-surgery">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Other Surgery</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
   <!-- JavaScript Modules -->
   <script src="js/schema.js"></script>
