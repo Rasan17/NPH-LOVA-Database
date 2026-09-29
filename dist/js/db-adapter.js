@@ -46,6 +46,7 @@
             if (!this.localDB.complications) this.localDB.complications = [];
             if (!this.localDB.revision_surgeries) this.localDB.revision_surgeries = [];
             if (!this.localDB.other_surgeries) this.localDB.other_surgeries = [];
+            if (!this.localDB.medical_treatments) this.localDB.medical_treatments = [];
             return;
           }
         } catch (e) {
@@ -483,13 +484,49 @@
         clinical_outcome: "Uneventful recovery. Full brain re-expansion documented on follow-up imaging."
       };
 
+
+      // Demonstrator Medical Treatments
+      const med1 = {
+        id: "med-demo-001",
+        patient_id: "pat-inph-001",
+        treatment_date: "2026-01-18",
+        prescribing_clinician: "Dr Eleanor Vance",
+        management_strategy: "Metformin for Metabolic Glymphatic Support",
+        indication: "Type 2 Diabetes with ventricular dilation and slow CSF clearance",
+        duration_planned: "Continuous / Long-term",
+        tolerability: "Well tolerated, no gastrointestinal upset",
+        clinical_response: "Stable glycemic control; preceded surgical evaluation",
+        notes: "HbA1c 6.8%; kidney function normal (eGFR 78).",
+        medications: [
+          { drug_name: "Metformin", dose: "500 mg", frequency: "Twice daily (bd)", route: "Oral", notes: "With meals" },
+          { drug_name: "Aspirin", dose: "75 mg", frequency: "Once daily (od)", route: "Oral", notes: "Cardiovascular prophylaxis" }
+        ]
+      };
+
+      const med2 = {
+        id: "med-demo-002",
+        patient_id: "pat-lova-002",
+        treatment_date: "2026-02-18",
+        prescribing_clinician: "Dr G Narenthiran",
+        management_strategy: "Acetazolamide (Diamox) for CSF Production Modulation",
+        indication: "Frequent morning throbbing headaches prior to scheduled ETV",
+        duration_planned: "Bridging therapy until surgery (2 weeks)",
+        tolerability: "Mild digital paresthesias, otherwise well tolerated",
+        clinical_response: "Noticeable reduction in morning headache intensity",
+        notes: "Electrolytes monitored; potassium normal.",
+        medications: [
+          { drug_name: "Acetazolamide (Diamox)", dose: "250 mg", frequency: "Twice daily (bd)", route: "Oral", notes: "Morning and evening" }
+        ]
+      };
+
       this.localDB = {
         patients: [p1, p2],
         adjustments: [a1],
         reviews: [r1],
         complications: [],
         revision_surgeries: [rev1],
-        other_surgeries: [oth1]
+        other_surgeries: [oth1],
+        medical_treatments: [med1, med2]
       };
     }
 
@@ -611,6 +648,7 @@
       this.localDB.complications = this.localDB.complications.filter(c => String(c.patient_id) !== String(id));
       this.localDB.revision_surgeries = (this.localDB.revision_surgeries || []).filter(r => String(r.patient_id) !== String(id));
       this.localDB.other_surgeries = (this.localDB.other_surgeries || []).filter(o => String(o.patient_id) !== String(id));
+      this.localDB.medical_treatments = (this.localDB.medical_treatments || []).filter(m => String(m.patient_id) !== String(id));
       this.persistLocal();
       return true;
     }
@@ -688,6 +726,51 @@
       return true;
     }
 
+
+    // --- GLOBAL GETTERS FOR COHORT AGGREGATIONS ---
+    async getAllReviews() {
+      return (this.localDB?.reviews || []).map(r => ({ ...r }));
+    }
+
+    async getAllComplications() {
+      return (this.localDB?.complications || []).map(c => ({ ...c }));
+    }
+
+    async getAllRevisionSurgeries() {
+      return (this.localDB?.revision_surgeries || []).map(r => ({ ...r }));
+    }
+
+    async getAllOtherSurgeries() {
+      return (this.localDB?.other_surgeries || []).map(o => ({ ...o }));
+    }
+
+    async getAllMedicalTreatments() {
+      return (this.localDB?.medical_treatments || []).map(m => ({ ...m }));
+    }
+
+    // --- MEDICAL MANAGEMENT & PHARMACOTHERAPY (Medical Mx) ---
+    async getMedicalTreatmentsForPatient(patientId) {
+      return (this.localDB?.medical_treatments || [])
+        .filter(m => String(m.patient_id) === String(patientId))
+        .sort((a, b) => new Date(b.treatment_date) - new Date(a.treatment_date));
+    }
+
+    async saveMedicalTreatment(treatmentData) {
+      if (!treatmentData.id) treatmentData.id = `med-${Date.now()}`;
+      if (!this.localDB.medical_treatments) this.localDB.medical_treatments = [];
+      const idx = this.localDB.medical_treatments.findIndex(m => m.id === treatmentData.id);
+      if (idx >= 0) this.localDB.medical_treatments[idx] = { ...treatmentData };
+      else this.localDB.medical_treatments.unshift({ ...treatmentData });
+      this.persistLocal();
+      return true;
+    }
+
+    async deleteMedicalTreatment(id) {
+      this.localDB.medical_treatments = (this.localDB.medical_treatments || []).filter(m => m.id !== id);
+      this.persistLocal();
+      return true;
+    }
+
     // --- NEW: REVISION SHUNT SURGERIES ---
     async getRevisionSurgeriesForPatient(patientId) {
       return (this.localDB?.revision_surgeries || [])
@@ -748,7 +831,8 @@
         reviews: this.localDB.reviews || [],
         complications: this.localDB.complications || [],
         revision_surgeries: this.localDB.revision_surgeries || [],
-        other_surgeries: this.localDB.other_surgeries || []
+        other_surgeries: this.localDB.other_surgeries || [],
+        medical_treatments: this.localDB.medical_treatments || []
       };
     }
 
@@ -760,7 +844,8 @@
         reviews: data.reviews || [],
         complications: data.complications || [],
         revision_surgeries: data.revision_surgeries || [],
-        other_surgeries: data.other_surgeries || []
+        other_surgeries: data.other_surgeries || [],
+        medical_treatments: data.medical_treatments || []
       };
       this.persistLocal();
       return true;

@@ -134,11 +134,12 @@
       <button class="tab-btn" data-tab="tab-differential">4. Neurology & Spine Exclusions</button>
       <button class="tab-btn" data-tab="tab-imaging">5. Neuroimaging & Radscale</button>
       <button class="tab-btn" data-tab="tab-csf">6. CSF Studies & Tap Test</button>
-      <button class="tab-btn" data-tab="tab-treatment">7. Surgery & Shunt Hardware</button>
-      <button class="tab-btn" data-tab="tab-adjustments">8. Shunt Adjustments Log</button>
-      <button class="tab-btn" data-tab="tab-outcomes">9. Outcomes & Satisfaction</button>
-      <button class="tab-btn" data-tab="tab-complications">10. Complications & Revisions</button>
-      <button class="tab-btn" data-tab="tab-cohort">11. Cohort Analytics</button>
+      <button class="tab-btn" data-tab="tab-medical-mx">7. Medical Mx</button>
+      <button class="tab-btn" data-tab="tab-treatment">8. Surgery & Shunt Hardware</button>
+      <button class="tab-btn" data-tab="tab-adjustments">9. Shunt Adjustments Log</button>
+      <button class="tab-btn" data-tab="tab-outcomes">10. Outcomes & Satisfaction</button>
+      <button class="tab-btn" data-tab="tab-complications">11. Complications & Revisions</button>
+      <button class="tab-btn" data-tab="tab-cohort">12. Cohort Analytics</button>
     </nav>
 
     <!-- Tab Panels Container -->
@@ -1049,7 +1050,67 @@
         </form>
       </section>
 
-      <!-- TAB 7: SURGERY & SHUNT HARDWARE -->
+      <!-- TAB 7: MEDICAL MX (MANAGEMENT & PHARMACOTHERAPY) -->
+      <section class="tab-panel" id="tab-medical-mx">
+        <div class="panel-header-flex">
+          <div>
+            <h2>Medical Management & Pharmacotherapy (Medical Mx)</h2>
+            <p class="panel-description">Comprehensive tracking of non-surgical pharmacological therapies, CSF production suppression (e.g. Acetazolamide), metabolic glymphatic support (Metformin), diuretic protocols, and symptomatic medical management.</p>
+          </div>
+          <button type="button" id="btn-new-medical-treatment" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            + New Medical Treatment
+          </button>
+        </div>
+
+        <div class="card mt-3">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title">Recorded Medical Management Regimens</h3>
+              <p class="card-subtitle">Chronological ledger of prescribed pharmacological regimens, specific drug dosages, indications, and clinical responses.</p>
+            </div>
+          </div>
+          <div class="table-responsive mt-2">
+            <table class="data-table" id="table-medical-treatments">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Medical Management Strategy</th>
+                  <th>Prescribed Drugs & Dosages</th>
+                  <th>Prescribing Clinician</th>
+                  <th>Clinical Indication</th>
+                  <th>Tolerability & Clinical Response</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-medical-treatments">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pharmacology Guidance & Rationale Card -->
+        <div class="card grid-span-12 mt-4">
+          <h3 class="card-title">Pharmacotherapy & Non-Surgical CSF Modulation Rationale</h3>
+          <div class="form-grid grid-cols-3 mt-3 text-xs text-secondary">
+            <div class="p-2 border rounded">
+              <strong class="text-main block mb-1">Carbonic Anhydrase Inhibition:</strong>
+              <strong>Acetazolamide (Diamox):</strong> Inhibits choroid plexus carbonic anhydrase, reducing CSF formation by up to 50%. Frequently employed as a temporary bridge in high-ICP LOVA decompensation or symptomatic morning headaches.
+            </div>
+            <div class="p-2 border rounded">
+              <strong class="text-main block mb-1">Metabolic Glymphatic Clearance:</strong>
+              <strong>Metformin:</strong> Investigated for promoting astrocyte water balance, aquaporin-4 (AQP4) polarization, reducing periventricular neuroinflammation, and enhancing convective glymphatic waste clearance in hydrocephalus.
+            </div>
+            <div class="p-2 border rounded">
+              <strong class="text-main block mb-1">Diuretics & Symptom Control:</strong>
+              <strong>Loop Diuretics & Beta-3 Agonists:</strong> Furosemide / Topiramate for intracranial pressure modulation; Mirabegron / Anticholinergics for urgency and urge incontinence symptoms in the Adams-Hakim triad.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 8: SURGERY & SHUNT HARDWARE -->
       <section class="tab-panel" id="tab-treatment">
         <div class="panel-header-flex">
           <div>
@@ -1557,14 +1618,284 @@
         </div>
       </section>
 
-      <!-- TAB 11: COHORT ANALYTICS -->
+      <!-- TAB 12: COHORT ANALYTICS & SUMMARY TABLES -->
       <section class="tab-panel" id="tab-cohort">
-        <div class="panel-header">
-          <h2>Registry Directory & Cohort Analytics Explorer</h2>
-          <p class="panel-description">Explore, filter, cross-tabulate, and export the entire patient cohort across diagnostic, imaging, surgical, and pharmacological axes.</p>
+        <div class="panel-header-flex">
+          <div>
+            <h2>Multi-disciplinary Cohort Analytics & Cross-Tabulations</h2>
+            <p class="panel-description">Comprehensive registry intelligence aggregating patient volumes, demographics, diagnoses, surgical interventions, complications, longitudinal outcomes (6wk to 2yr), and revision rates.</p>
+          </div>
+          <div class="header-btn-group">
+            <button type="button" id="btn-cohort-export-csv" class="btn btn-secondary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Export CSV
+            </button>
+            <button type="button" id="btn-cohort-export-json" class="btn btn-secondary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Export JSON Backup
+            </button>
+          </div>
         </div>
 
-        <div class="card">
+        <!-- 1. Executive Cohort KPI Metrics -->
+        <div class="analytics-kpi-grid mt-3">
+          <div class="kpi-card">
+            <div class="kpi-title">Total Registry Cohort</div>
+            <div class="kpi-number text-csf" id="kpi-total-patients">0</div>
+            <div class="kpi-subtext">Total NPH & LOVA Seen</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">NPH Cohort (iNPH/sNPH)</div>
+            <div class="kpi-number text-csf" id="kpi-nph-count">0</div>
+            <div class="kpi-subtext" id="kpi-nph-pct">0% of total</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">LOVA Cohort</div>
+            <div class="kpi-number text-lova" id="kpi-lova-count">0</div>
+            <div class="kpi-subtext" id="kpi-lova-pct">0% of total</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Other / Under Evaluation</div>
+            <div class="kpi-number text-secondary" id="kpi-other-dx-count">0</div>
+            <div class="kpi-subtext">Diagnostic workup</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Surgeries Undertaken</div>
+            <div class="kpi-number text-emerald" id="kpi-total-surgeries">0</div>
+            <div class="kpi-subtext" id="kpi-surgery-rate">0% intervention rate</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Revision Surgeries</div>
+            <div class="kpi-number text-amber" id="kpi-total-revisions">0</div>
+            <div class="kpi-subtext" id="kpi-revision-rate">0% of shunts</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Other Surgeries</div>
+            <div class="kpi-number text-purple" id="kpi-other-surgeries-count">0</div>
+            <div class="kpi-subtext">Burr holes, spine, etc.</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Complication Events</div>
+            <div class="kpi-number text-danger" id="kpi-total-complications">0</div>
+            <div class="kpi-subtext" id="kpi-complication-rate">0% event rate</div>
+          </div>
+        </div>
+
+        <!-- 2. Core Demographic & Diagnostic Summary Tables Grid -->
+        <div class="summary-tables-grid">
+          <!-- Summary Table 1: Age Groups -->
+          <div class="summary-table-card">
+            <h4 class="card-title">1. Summary by Age Group</h4>
+            <p class="card-subtitle">Distribution of patients, diagnoses, and surgical intervention rates across age strata.</p>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Age Group</th>
+                    <th>Patients (N)</th>
+                    <th>Cohort %</th>
+                    <th>NPH / LOVA / Other</th>
+                    <th>Had Surgery (N)</th>
+                    <th>Surgery Rate (%)</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-summary-age">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Summary Table 2: Gender Distribution -->
+          <div class="summary-table-card">
+            <h4 class="card-title">2. Summary by Gender</h4>
+            <p class="card-subtitle">Sex distribution, mean head circumference (OFC), and adult macrocephaly prevalence.</p>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Gender</th>
+                    <th>Patients (N)</th>
+                    <th>Cohort %</th>
+                    <th>NPH / LOVA Split</th>
+                    <th>Mean OFC (cm)</th>
+                    <th>Macrocephaly (N, %)</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-summary-gender">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Summary Table 3: Diagnosis Breakdown -->
+          <div class="summary-table-card">
+            <h4 class="card-title">3. Summary by Diagnosis (NPH, LOVA, Other)</h4>
+            <p class="card-subtitle">Volumetric and morphometric profile, mean age, Evans' index, and surgical treatments.</p>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Diagnosis</th>
+                    <th>Patients (N)</th>
+                    <th>Cohort %</th>
+                    <th>Mean Age</th>
+                    <th>Mean Evans'</th>
+                    <th>Had Surgery (N, %)</th>
+                    <th>Shunt vs ETV</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-summary-diagnosis">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Summary Table 4: Surgical Management Breakdown -->
+          <div class="summary-table-card">
+            <h4 class="card-title">4. Summary of Surgical Procedures Undertaken</h4>
+            <p class="card-subtitle">Diversionary procedures profile and mean initial opening & anti-gravity settings.</p>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Procedure Type</th>
+                    <th>Patients (N)</th>
+                    <th>% of Surgeries</th>
+                    <th>Mean Initial DP</th>
+                    <th>Mean Initial AG</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-summary-procedures">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Complications, Outcomes, Revisions & Other Surgeries Grid -->
+        <div class="summary-tables-grid">
+          <!-- Summary Table 5: Surgical Complications Profile -->
+          <div class="summary-table-card">
+            <h4 class="card-title">5. Surgical Complications Profile</h4>
+            <p class="card-subtitle">Categorical analysis of adverse events (overdrainage hygromas, mechanical blocks, infections).</p>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Complication Category</th>
+                    <th>Events (N)</th>
+                    <th>% of Surgeries</th>
+                    <th>Conservative</th>
+                    <th>Required Revision / Surgery</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-summary-complications">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Summary Table 6: Longitudinal Functional Outcomes -->
+          <div class="summary-table-card">
+            <h4 class="card-title">6. Longitudinal Outcomes: 6wk, 3mo, 6mo, 1yr, 2yr</h4>
+            <p class="card-subtitle">Symptomatic response rates and functional improvements across all clinic review milestones.</p>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Follow-Up Milestone</th>
+                    <th>Reviews (N)</th>
+                    <th>Marked Improvement</th>
+                    <th>Moderate Improvement</th>
+                    <th>Unchanged / Worse</th>
+                    <th>Mean Walk Time &Delta;</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-summary-outcomes">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Summary Table 7: Revision Shunt Surgery Analysis -->
+          <div class="summary-table-card">
+            <h4 class="card-title">7. Revision Shunt Surgery Analysis</h4>
+            <p class="card-subtitle">Incidence of repeat surgery, indications for malfunction, and components replaced.</p>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Revision Metric</th>
+                    <th>Count (N)</th>
+                    <th>% of Shunted Cohort</th>
+                    <th>Primary Clinical Driver / Details</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-summary-revisions">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Summary Table 8: Other Collateral Surgeries Analysis -->
+          <div class="summary-table-card">
+            <h4 class="card-title">8. Other Collateral Surgeries Analysis</h4>
+            <p class="card-subtitle">Cranial burr holes for hematomas, arachnoid cyst fenestrations, abdominal adhesiolysis, spine surgeries.</p>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Procedure Category / Name</th>
+                    <th>Procedures (N)</th>
+                    <th>% of Cohort</th>
+                    <th>Commonest Indication & Outcome</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-summary-other-surgeries">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Other Specialist Analyses -->
+        <div class="card mt-4 card-highlight-csf">
+          <h3 class="card-title">Other Analysis: Pharmacotherapy, Macrocephaly & Imaging Predictors</h3>
+          <p class="card-subtitle">Targeted clinical research cross-tabulations on Metformin exposure, adult macrocephaly in LOVA, and iNPH Radscale response.</p>
+          <div class="form-grid grid-cols-3 mt-3">
+            <div class="p-3 border rounded bg-surface">
+              <h4 class="text-sm font-bold text-amber">Metformin Exposure Correlates</h4>
+              <div class="mt-2 text-xs" id="analysis-metformin-box">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <div class="p-3 border rounded bg-surface">
+              <h4 class="text-sm font-bold text-lova">Adult Macrocephaly in LOVA vs iNPH</h4>
+              <div class="mt-2 text-xs" id="analysis-macrocephaly-box">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <div class="p-3 border rounded bg-surface">
+              <h4 class="text-sm font-bold text-csf">iNPH Radscale (DESH) Predictive Yield</h4>
+              <div class="mt-2 text-xs" id="analysis-radscale-box">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Cohort Directory & Filterable Patient Table -->
+        <div class="card mt-4">
           <div class="cohort-toolbar">
             <div class="cohort-filters">
               <input type="text" id="cohort-filter-text" class="form-control" placeholder="Filter cohort by name, MRN, hardware..." style="max-width:300px;" />
@@ -1573,16 +1904,13 @@
                 <option value="iNPH">iNPH</option>
                 <option value="LOVA">LOVA</option>
                 <option value="sNPH">sNPH</option>
+                <option value="Mixed">Mixed / Other</option>
               </select>
               <select id="cohort-filter-metformin" class="form-control" style="max-width:200px;">
                 <option value="ALL">All Metformin Status</option>
                 <option value="Active">Active Metformin</option>
                 <option value="Never">Never Taken</option>
               </select>
-            </div>
-            <div class="cohort-export-buttons">
-              <button id="btn-cohort-export-csv" class="btn btn-secondary">Export to CSV</button>
-              <button id="btn-cohort-export-json" class="btn btn-secondary">Export to JSON</button>
             </div>
           </div>
 
@@ -1610,6 +1938,7 @@
           </div>
         </div>
       </section>
+
     </main>
 
     <!-- Modals -->
@@ -2110,6 +2439,98 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-close-modal="modal-other-surgery">Cancel</button>
             <button type="submit" class="btn btn-primary">Save Other Surgery</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+    <!-- Modal: Medical Treatment (Medical Mx) -->
+    <div class="modal-backdrop" id="modal-medical-treatment" style="display:none;">
+      <div class="modal-dialog modal-dialog-lg">
+        <div class="modal-header">
+          <h3 class="modal-title">New Medical Treatment (Medical Mx)</h3>
+          <button type="button" class="modal-close-btn" data-close-modal="modal-medical-treatment">&times;</button>
+        </div>
+        <form id="form-modal-medical-treatment">
+          <div class="modal-body">
+            <div class="form-grid grid-cols-2">
+              <div class="form-group">
+                <label for="m-med-date">Encounter / Prescription Date*</label>
+                <input type="date" id="m-med-date" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="m-med-clinician">Prescribing Clinician / Neurologist*</label>
+                <input type="text" id="m-med-clinician" class="form-control" required placeholder="Doctor / Consultant name" />
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-med-strategy">Medical Management Strategy / Objective*</label>
+                <select id="m-med-strategy" class="form-control font-semibold" required>
+                  <option value="Acetazolamide (Diamox) for CSF Production Modulation">Acetazolamide (Diamox) for CSF Production Modulation</option>
+                  <option value="Metformin for Metabolic Glymphatic Support">Metformin for Metabolic Glymphatic Support</option>
+                  <option value="Loop / Osmotic Diuretic Protocol (Furosemide / Spironolactone)">Loop / Osmotic Diuretic Protocol (Furosemide / Spironolactone)</option>
+                  <option value="Topiramate for ICP / Morning Headache Modulation">Topiramate for ICP / Morning Headache Modulation</option>
+                  <option value="Anticoagulation / Antiplatelet Bridging Protocol">Anticoagulation / Antiplatelet Bridging Protocol</option>
+                  <option value="Cognitive Enhancement (Memantine / Donepezil)">Cognitive Enhancement (Memantine / Donepezil)</option>
+                  <option value="Urinary Continence Pharmacotherapy (Mirabegron / Anticholinergic)">Urinary Continence Pharmacotherapy (Mirabegron / Anticholinergic)</option>
+                  <option value="Symptomatic Analgesia / Neuropathic Pain Relief">Symptomatic Analgesia / Neuropathic Pain Relief</option>
+                  <option value="Antihypertensive Perfusion Optimization">Antihypertensive Perfusion Optimization</option>
+                  <option value="Conservative Medical Surveillance / Watchful Waiting">Conservative Medical Surveillance / Watchful Waiting</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-med-indication">Clinical Indication / Therapeutic Target*</label>
+                <input type="text" id="m-med-indication" class="form-control" required placeholder="e.g. Elevated opening pressure & morning headache prior to surgery, or glymphatic support" />
+              </div>
+
+              <!-- Multi-row Medications Box -->
+              <div class="form-group grid-span-2">
+                <div class="card-header-flex mb-2">
+                  <label class="font-bold text-main">Medications (Drug Name, Dose, Frequency, Route)</label>
+                  <button type="button" class="btn btn-secondary btn-xs" id="btn-add-drug-row">
+                    + Add Additional Medication
+                  </button>
+                </div>
+                <div id="med-drug-rows-container">
+                  <!-- Dynamically populated drug rows -->
+                </div>
+                <span class="help-text">Click '+ Add Additional Medication' to record multiple simultaneous drugs in this medical management regimen.</span>
+              </div>
+
+              <div class="form-group">
+                <label for="m-med-duration">Planned Treatment Duration</label>
+                <input type="text" id="m-med-duration" class="form-control" placeholder="e.g. 4 weeks, Ongoing / Long-term" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-med-tolerability">Tolerability & Adverse Effects</label>
+                <select id="m-med-tolerability" class="form-control">
+                  <option value="Well tolerated / No adverse effects">Well tolerated / No adverse effects</option>
+                  <option value="Mild paresthesias (expected with Diamox)">Mild paresthesias (expected with Diamox)</option>
+                  <option value="Gastrointestinal upset / nausea">Gastrointestinal upset / nausea</option>
+                  <option value="Electrolyte shift / hypokalemia">Electrolyte shift / hypokalemia</option>
+                  <option value="Fatigue / dizziness">Fatigue / dizziness</option>
+                  <option value="Discontinued due to intolerance">Discontinued due to intolerance</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-med-response">Clinical Response & Symptomatic Impact</label>
+                <textarea id="m-med-response" class="form-control" rows="2" placeholder="Record impact on walking speed, headache frequency, cognitive alertness, or continence..."></textarea>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-med-notes">Clinician Notes & Monitoring Plan</label>
+                <input type="text" id="m-med-notes" class="form-control" placeholder="e.g. Check U&Es in 2 weeks; review at next clinic" />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-modal="modal-medical-treatment">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Medical Treatment</button>
           </div>
         </form>
       </div>
