@@ -76,7 +76,8 @@ Engineered with a **Tauri v2** desktop framework backed by **Rust** and **SQLite
 
 ### 12. Cohort Analytics & Full Database Export/Import
 - Instant search and multi-parameter filtering across the registry.
-- One-click export to CSV, structured JSON, and raw SQLite database backup.
+- Native Stata Statistical Dataset (.dta format 114) export for immediate multivariable regressions, survival analysis, and cross-tabulations in Stata 10–19, R (haven), and Python (pandas/statsmodels). Includes Cohort Master analysis dataset (79 clinical variables), Longitudinal Reviews dataset, and Medical Management dataset.
+- One-click export to CSV, multi-sheet Excel (.xlsx/XML), structured JSON, and raw SQLite database backups.
 
 ---
 

@@ -149,6 +149,7 @@ function setupEventListeners() {
   document.getElementById('cohort-filter-text')?.addEventListener('input', renderCohortTable);
   document.getElementById('cohort-filter-dx')?.addEventListener('change', renderCohortTable);
   document.getElementById('cohort-filter-metformin')?.addEventListener('change', renderCohortTable);
+  document.getElementById('btn-cohort-export-stata')?.addEventListener('click', () => handleExportStata('cohort'));
   document.getElementById('btn-cohort-export-csv')?.addEventListener('click', exportCohortCSV);
   document.getElementById('btn-cohort-export-json')?.addEventListener('click', exportDatabase);
 
@@ -191,6 +192,9 @@ function setupEventListeners() {
     openModal('modal-db-operations');
   });
 
+  document.getElementById('btn-op-stata-cohort')?.addEventListener('click', () => handleExportStata('cohort'));
+  document.getElementById('btn-op-stata-reviews')?.addEventListener('click', () => handleExportStata('reviews'));
+  document.getElementById('btn-op-stata-med')?.addEventListener('click', () => handleExportStata('medical'));
   document.getElementById('btn-op-excel-backup')?.addEventListener('click', handleExcelBackup);
   document.getElementById('btn-op-sqlite-backup')?.addEventListener('click', handleSqliteBackup);
   document.getElementById('btn-op-clone-db')?.addEventListener('click', handleCloneDatabase);
@@ -2161,6 +2165,9 @@ function applyRolePermissions(user) {
   if (btnDelPat) btnDelPat.style.display = (isAdmin || isDev) ? 'inline-flex' : 'none';
 
   // Export Buttons on Cohort Tab (Admin & Dev only)
+  const btnStata = document.getElementById('btn-cohort-export-stata');
+  if (btnStata) btnStata.style.display = (isAdmin || isDev) ? 'inline-flex' : 'none';
+
   const btnCsv = document.getElementById('btn-cohort-export-csv');
   if (btnCsv) btnCsv.style.display = (isAdmin || isDev) ? 'inline-flex' : 'none';
 
@@ -2252,6 +2259,31 @@ async function handleCreateUserSubmit(e) {
 }
 
 // --- DATABASE OPERATIONS (BACKUPS, CLONES) ---
+
+async function handleExportStata(datasetType = 'cohort') {
+  if (AppState.currentUser?.role === 'User') {
+    alert("Permission Denied: The 'User' role is not permitted to export data or create Stata datasets.");
+    return;
+  }
+  try {
+    const arrayBuffer = await DatabaseAdapter.generateStataDtaExport(datasetType, AppState.currentUser);
+    const blob = new Blob([arrayBuffer], { type: 'application/x-stata-dta' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const dateStr = new Date().toISOString().split('T')[0];
+    const prefix = datasetType === 'reviews' 
+      ? 'NPH_LOVA_Longitudinal_Reviews' 
+      : (datasetType === 'medical' ? 'NPH_LOVA_Medical_Mx' : 'NPH_LOVA_Cohort_Analysis');
+    a.download = prefix + '_' + dateStr + '.dta';
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('Native Stata dataset (' + a.download + ') successfully generated and downloaded.', 'success');
+  } catch (e) {
+    alert(e.message || 'Error generating Stata export');
+  }
+}
+
 
 async function handleExcelBackup() {
   if (AppState.currentUser?.role === 'User') {

@@ -1675,6 +1675,10 @@
             <p class="panel-description">Comprehensive registry intelligence aggregating patient volumes, demographics, diagnoses, surgical interventions, complications, longitudinal outcomes (6wk to 2yr), and revision rates.</p>
           </div>
           <div class="header-btn-group">
+            <button type="button" id="btn-cohort-export-stata" class="btn btn-primary" title="Export complete cohort dataset as native binary Stata dataset (.dta format 114)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Export Stata (.dta)
+            </button>
             <button type="button" id="btn-cohort-export-csv" class="btn btn-secondary">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               Export CSV
@@ -2771,6 +2775,20 @@
             <button type="button" id="btn-op-clone-db" class="btn btn-purple w-100">
               Clone Database Snapshot
             </button>
+          </div>
+
+          <div class="summary-table-card">
+            <h4 class="card-title text-csf">Stata Statistical Datasets (.dta)</h4>
+            <p class="card-subtitle">Export native binary Stata datasets (.dta format 114) ready for immediate statistical analysis in Stata 10–19, R (haven), and Python.</p>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              <button type="button" id="btn-op-stata-cohort" class="btn btn-primary w-100">
+                Download Cohort Master (.dta)
+              </button>
+              <div style="display:flex; gap:0.5rem;">
+                <button type="button" id="btn-op-stata-reviews" class="btn btn-secondary" style="flex:1;">Reviews (.dta)</button>
+                <button type="button" id="btn-op-stata-med" class="btn btn-secondary" style="flex:1;">Medical Mx (.dta)</button>
+              </div>
+            </div>
           </div>
 
           <div class="summary-table-card">

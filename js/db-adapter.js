@@ -15,6 +15,156 @@
   }
 }(typeof self !== 'undefined' ? self : this, function () {
 
+  
+// Stata 114 Binary Generator Helper (Compatible with Stata 10-19, R haven/foreign, Python pandas)
+function buildStata114Binary(variables, rows, datasetLabel = 'NPH & LOVA Registry') {
+  const nvar = variables.length;
+  const nobs = rows.length;
+
+  let rowSize = 0;
+  for (const v of variables) {
+    if (v.type <= 244) rowSize += v.type;
+    else if (v.type === 251) rowSize += 1;
+    else if (v.type === 252) rowSize += 2;
+    else if (v.type === 253) rowSize += 4;
+    else if (v.type === 254) rowSize += 4;
+    else if (v.type === 255) rowSize += 8;
+  }
+
+  const headerSize = 109;
+  const typlistSize = nvar;
+  const varlistSize = nvar * 33;
+  const srtlistSize = (nvar + 1) * 2;
+  const fmtlistSize = nvar * 49;
+  const lbllistSize = nvar * 33;
+  const varlabsSize = nvar * 81;
+  const expSize = 5;
+  const preambleSize = headerSize + typlistSize + varlistSize + srtlistSize + fmtlistSize + lbllistSize + varlabsSize + expSize;
+  const totalSize = preambleSize + (nobs * rowSize);
+
+  const buffer = new ArrayBuffer(totalSize);
+  const view = new DataView(buffer);
+  const uint8 = new Uint8Array(buffer);
+
+  // 1. Header (109 bytes)
+  view.setUint8(0, 114); // Stata 114 format
+  view.setUint8(1, 2);   // LSF (little-endian)
+  view.setUint8(2, 1);   // Filetype
+  view.setUint8(3, 0);   // Unused
+  view.setUint16(4, nvar, true);
+  view.setUint32(6, nobs, true);
+
+  const encoder = new TextEncoder();
+  const lblBytes = encoder.encode(datasetLabel.slice(0, 80));
+  uint8.set(lblBytes, 10);
+
+  const now = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const day = String(now.getDate()).padStart(2, '0');
+  const mon = months[now.getMonth()];
+  const yr = now.getFullYear();
+  const hr = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const tsStr = day + ' ' + mon + ' ' + yr + ' ' + hr + ':' + min;
+  const tsBytes = encoder.encode(tsStr.slice(0, 17));
+  uint8.set(tsBytes, 91);
+
+  let offset = 109;
+
+  // 2. Typlist
+  for (let i = 0; i < nvar; i++) view.setUint8(offset + i, variables[i].type);
+  offset += nvar;
+
+  // 3. Varlist
+  for (let i = 0; i < nvar; i++) {
+    const rawName = variables[i].name.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 32);
+    const nameBytes = encoder.encode(rawName);
+    uint8.set(nameBytes, offset + (i * 33));
+  }
+  offset += nvar * 33;
+
+  // 4. Srtlist (zeros)
+  offset += (nvar + 1) * 2;
+
+  // 5. Fmtlist
+  for (let i = 0; i < nvar; i++) {
+    const fmt = variables[i].fmt || (variables[i].type <= 244 ? '%' + variables[i].type + 's' : '%9.0g');
+    const fmtBytes = encoder.encode(fmt.slice(0, 48));
+    uint8.set(fmtBytes, offset + (i * 49));
+  }
+  offset += nvar * 49;
+
+  // 6. Lbllist (zeros)
+  offset += nvar * 33;
+
+  // 7. Varlabs
+  for (let i = 0; i < nvar; i++) {
+    if (variables[i].label) {
+      const labBytes = encoder.encode(variables[i].label.slice(0, 80));
+      uint8.set(labBytes, offset + (i * 81));
+    }
+  }
+  offset += nvar * 81;
+
+  // 8. Expansion fields (5 zero bytes)
+  offset += 5;
+
+  // 9. Data Rows
+  for (let r = 0; r < nobs; r++) {
+    const row = rows[r];
+    for (let i = 0; i < nvar; i++) {
+      const v = variables[i];
+      const val = row[v.name];
+      const t = v.type;
+
+      if (t <= 244) {
+        const strVal = (val !== null && val !== undefined) ? String(val) : '';
+        const strBytes = encoder.encode(strVal).slice(0, t);
+        uint8.set(strBytes, offset);
+        offset += t;
+      } else if (t === 251) {
+        if (val === null || val === undefined || isNaN(val)) {
+          view.setInt8(offset, 101); // Stata byte missing
+        } else {
+          view.setInt8(offset, parseInt(val, 10));
+        }
+        offset += 1;
+      } else if (t === 252) {
+        if (val === null || val === undefined || isNaN(val)) {
+          view.setInt16(offset, 32741, true); // Stata int16 missing
+        } else {
+          view.setInt16(offset, parseInt(val, 10), true);
+        }
+        offset += 2;
+      } else if (t === 253) {
+        if (val === null || val === undefined || isNaN(val)) {
+          view.setInt32(offset, 2147483621, true); // Stata int32 missing
+        } else {
+          view.setInt32(offset, parseInt(val, 10), true);
+        }
+        offset += 4;
+      } else if (t === 254) {
+        if (val === null || val === undefined || isNaN(val)) {
+          view.setUint32(offset, 0x7f000000, true); // Stata float missing
+        } else {
+          view.setFloat32(offset, parseFloat(val), true);
+        }
+        offset += 4;
+      } else if (t === 255) {
+        if (val === null || val === undefined || isNaN(val)) {
+          view.setUint32(offset, 0, true);
+          view.setUint32(offset + 4, 0x7fe00000, true); // Stata double missing
+        } else {
+          view.setFloat64(offset, parseFloat(val), true);
+        }
+        offset += 8;
+      }
+    }
+  }
+
+  return buffer;
+}
+
   class DatabaseAdapterImpl {
     constructor() {
       this.isTauri = typeof window !== 'undefined' && 
@@ -1740,6 +1890,325 @@ CREATE TABLE IF NOT EXISTS revision_surgeries (id TEXT PRIMARY KEY, patient_id T
 
       return sql;
     }
+
+    async generateStataDtaExport(datasetType = 'cohort', requestingUser) {
+      if (requestingUser?.role === 'User') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'system',
+          details: 'User ' + requestingUser?.username + ' attempted unauthorized Stata (.dta) dataset export.'
+        });
+        throw new Error("Access Denied: The 'User' role is not permitted to export data or create Stata datasets.");
+      }
+
+      const pList = this.localDB.patients || [];
+      const mList = this.localDB.medical_treatments || [];
+      const aList = this.localDB.adjustments || [];
+      const rList = this.localDB.reviews || [];
+      const cList = this.localDB.complications || [];
+      const revList = this.localDB.revision_surgeries || [];
+      const othList = this.localDB.other_surgeries || [];
+
+      let variables = [];
+      let rows = [];
+      let label = 'NPH LOVA Registry';
+
+      if (datasetType === 'reviews') {
+        label = 'NPH LOVA Longitudinal Reviews';
+        variables = [
+          { name: 'review_id', type: 24, fmt: '%24s', label: 'Review Event Record ID' },
+          { name: 'patient_id', type: 24, fmt: '%24s', label: 'Patient Unique Database ID' },
+          { name: 'study_id', type: 24, fmt: '%24s', label: 'Patient Study ID' },
+          { name: 'mrn', type: 24, fmt: '%24s', label: 'Hospital Record Number' },
+          { name: 'review_date', type: 10, fmt: '%10s', label: 'Review Assessment Date' },
+          { name: 'interval', type: 24, fmt: '%24s', label: 'Milestone Timepoint' },
+          { name: 'clinician', type: 32, fmt: '%32s', label: 'Evaluating Clinician' },
+          { name: 'gait_status', type: 24, fmt: '%24s', label: 'Gait Improvement Status' },
+          { name: 'walk_time_sec', type: 255, fmt: '%8.2f', label: 'Timed 10m Walk (seconds)' },
+          { name: 'walk_steps', type: 252, fmt: '%8.0g', label: 'Timed 10m Walk Steps' },
+          { name: 'tug_sec', type: 255, fmt: '%8.2f', label: 'Timed Up and Go (seconds)' },
+          { name: 'cog_status', type: 24, fmt: '%24s', label: 'Cognitive Improvement Status' },
+          { name: 'moca_score', type: 252, fmt: '%8.0g', label: 'Follow-up MoCA Score (0-30)' },
+          { name: 'urin_status', type: 24, fmt: '%24s', label: 'Urinary Improvement Status' },
+          { name: 'pgi_i', type: 24, fmt: '%24s', label: 'Patient Global Impression (PGI-I)' }
+        ];
+
+        rows = rList.map(r => {
+          const p = pList.find(pt => pt.id === r.patient_id) || {};
+          return {
+            review_id: r.id || '',
+            patient_id: r.patient_id || '',
+            study_id: p.study_id || p.id || '',
+            mrn: p.mrn || '',
+            review_date: r.review_date || '',
+            interval: r.interval_name || '',
+            clinician: r.evaluating_clinician || 'Dr G Narenthiran',
+            gait_status: r.gait_improvement_status || '',
+            walk_time_sec: r.walk_time_seconds != null && !isNaN(r.walk_time_seconds) ? parseFloat(r.walk_time_seconds) : null,
+            walk_steps: r.walk_steps != null && !isNaN(r.walk_steps) ? parseInt(r.walk_steps, 10) : null,
+            tug_sec: r.tug_seconds != null && !isNaN(r.tug_seconds) ? parseFloat(r.tug_seconds) : null,
+            cog_status: r.cognitive_improvement_status || '',
+            moca_score: r.moca_score != null && !isNaN(r.moca_score) ? parseInt(r.moca_score, 10) : null,
+            urin_status: r.urinary_improvement_status || '',
+            pgi_i: r.patient_pgi_i || ''
+          };
+        });
+      } else if (datasetType === 'medical') {
+        label = 'NPH LOVA Medical Mx';
+        variables = [
+          { name: 'treatment_id', type: 24, fmt: '%24s', label: 'Medical Treatment Record ID' },
+          { name: 'patient_id', type: 24, fmt: '%24s', label: 'Patient Unique Database ID' },
+          { name: 'study_id', type: 24, fmt: '%24s', label: 'Patient Study ID' },
+          { name: 'mrn', type: 24, fmt: '%24s', label: 'Hospital Record Number' },
+          { name: 'tx_date', type: 10, fmt: '%10s', label: 'Treatment Date (YYYY-MM-DD)' },
+          { name: 'clinician', type: 32, fmt: '%32s', label: 'Prescribing Clinician' },
+          { name: 'strategy', type: 48, fmt: '%48s', label: 'Management Strategy' },
+          { name: 'indication', type: 48, fmt: '%48s', label: 'Clinical Indication' },
+          { name: 'drug_name', type: 36, fmt: '%36s', label: 'Primary Medication Name' },
+          { name: 'dose', type: 16, fmt: '%16s', label: 'Prescribed Dose' },
+          { name: 'frequency', type: 24, fmt: '%24s', label: 'Dosing Frequency' },
+          { name: 'route', type: 12, fmt: '%12s', label: 'Route' },
+          { name: 'duration', type: 32, fmt: '%32s', label: 'Planned Duration' },
+          { name: 'tolerability', type: 36, fmt: '%36s', label: 'Tolerability' },
+          { name: 'response', type: 48, fmt: '%48s', label: 'Clinical Response' }
+        ];
+
+        rows = mList.map(m => {
+          const p = pList.find(pt => pt.id === m.patient_id) || {};
+          const firstDrug = (Array.isArray(m.drugs) && m.drugs.length > 0) ? m.drugs[0] : ((Array.isArray(m.medications) && m.medications.length > 0) ? m.medications[0] : {});
+          return {
+            treatment_id: m.id || '',
+            patient_id: m.patient_id || '',
+            study_id: p.study_id || p.id || '',
+            mrn: p.mrn || '',
+            tx_date: m.treatment_date || '',
+            clinician: m.prescribing_clinician || m.clinician || '',
+            strategy: m.management_strategy || '',
+            indication: m.indication || '',
+            drug_name: firstDrug.name || firstDrug.drug_name || '',
+            dose: firstDrug.dose || '',
+            frequency: firstDrug.frequency || '',
+            route: firstDrug.route || 'Oral',
+            duration: m.duration_planned || '',
+            tolerability: m.tolerability || '',
+            response: m.clinical_response || ''
+          };
+        });
+      } else {
+        // 'cohort' master analysis dataset
+        label = 'NPH LOVA Registry Cohort';
+        variables = [
+          { name: 'study_id', type: 24, fmt: '%24s', label: 'Study Identification Code' },
+          { name: 'mrn', type: 24, fmt: '%24s', label: 'Hospital Record Number (MRN)' },
+          { name: 'first_name', type: 32, fmt: '%32s', label: 'Patient First Name' },
+          { name: 'last_name', type: 32, fmt: '%32s', label: 'Patient Last Name' },
+          { name: 'age', type: 252, fmt: '%8.0g', label: 'Age at Presentation (years)' },
+          { name: 'gender', type: 8, fmt: '%8s', label: 'Biological Gender' },
+          { name: 'dob', type: 10, fmt: '%10s', label: 'Date of Birth (YYYY-MM-DD)' },
+          { name: 'handedness', type: 12, fmt: '%12s', label: 'Dominant Handedness' },
+          { name: 'ethnicity', type: 24, fmt: '%24s', label: 'Ethnicity' },
+          { name: 'ofc_cm', type: 255, fmt: '%8.2f', label: 'Head Circumference (cm)' },
+          { name: 'macrocephaly', type: 251, fmt: '%8.0g', label: 'Adult Macrocephaly (>58cm M, >56cm F)' },
+          { name: 'height_cm', type: 255, fmt: '%8.1f', label: 'Height (cm)' },
+          { name: 'weight_kg', type: 255, fmt: '%8.1f', label: 'Weight (kg)' },
+          { name: 'bmi', type: 255, fmt: '%8.2f', label: 'Body Mass Index (kg/m2)' },
+          { name: 'diagnosis', type: 16, fmt: '%16s', label: 'Diagnosis Category (iNPH, sNPH, LOVA)' },
+          { name: 'metformin', type: 16, fmt: '%16s', label: 'Metformin Exposure (Active, Past, Never)' },
+          { name: 'met_dose_mg', type: 255, fmt: '%8.0g', label: 'Metformin Daily Dose (mg)' },
+          { name: 'met_dur_yr', type: 255, fmt: '%8.1f', label: 'Metformin Duration (years)' },
+          { name: 'hypertension', type: 251, fmt: '%8.0g', label: 'Hypertension (1=Yes, 0=No)' },
+          { name: 'diabetes', type: 251, fmt: '%8.0g', label: 'Diabetes Mellitus (1=Yes, 0=No)' },
+          { name: 'prev_cns_inf', type: 251, fmt: '%8.0g', label: 'Previous CNS Infection (1=Yes, 0=No)' },
+          { name: 'prev_trauma', type: 251, fmt: '%8.0g', label: 'Previous Head Trauma (1=Yes, 0=No)' },
+          { name: 'prev_sah', type: 251, fmt: '%8.0g', label: 'Previous Subarachnoid Hemorrhage' },
+          { name: 'symptom_dur_mo', type: 252, fmt: '%8.0g', label: 'Symptom Duration (months)' },
+          { name: 'gait_disturb', type: 251, fmt: '%8.0g', label: 'Gait Disturbance Present (1=Yes, 0=No)' },
+          { name: 'gait_sev', type: 24, fmt: '%24s', label: 'Gait Severity Phenotype' },
+          { name: 'falls_freq', type: 32, fmt: '%32s', label: 'Reported Falls Frequency' },
+          { name: 'cog_impair', type: 251, fmt: '%8.0g', label: 'Cognitive Impairment (1=Yes, 0=No)' },
+          { name: 'baseline_moca', type: 252, fmt: '%8.0g', label: 'Baseline MoCA Score (0-30)' },
+          { name: 'baseline_mmse', type: 252, fmt: '%8.0g', label: 'Baseline MMSE Score (0-30)' },
+          { name: 'urinary_symp', type: 251, fmt: '%8.0g', label: 'Urinary Symptoms (1=Yes, 0=No)' },
+          { name: 'urinary_sev', type: 24, fmt: '%24s', label: 'Urinary Symptoms Severity' },
+          { name: 'lova_headache', type: 251, fmt: '%8.0g', label: 'LOVA Morning/Cough Headache (1=Yes)' },
+          { name: 'lova_vis_obsc', type: 251, fmt: '%8.0g', label: 'LOVA Transient Visual Obscurations' },
+          { name: 'lova_papill', type: 251, fmt: '%8.0g', label: 'LOVA Papilledema Present' },
+          { name: 'evans_index', type: 255, fmt: '%8.3f', label: 'Evans Index (Bifrontal/Biparietal)' },
+          { name: 'callosal_angle', type: 255, fmt: '%8.1f', label: 'Callosal Angle (degrees)' },
+          { name: 'temporal_horns', type: 255, fmt: '%8.1f', label: 'Temporal Horn Width (mm)' },
+          { name: 'third_vent_mm', type: 255, fmt: '%8.1f', label: 'Third Ventricle Width (mm)' },
+          { name: 'radscale_total', type: 252, fmt: '%8.0g', label: 'Total iNPH Radscale Score (0-12)' },
+          { name: 'desh_tight_vtx', type: 251, fmt: '%8.0g', label: 'DESH High Convexity Tightness' },
+          { name: 'desh_sylvian', type: 251, fmt: '%8.0g', label: 'DESH Sylvian Fissure Dilation' },
+          { name: 'lova_stenosis', type: 251, fmt: '%8.0g', label: 'Aqueductal Stenosis / Web (1=Yes)' },
+          { name: 'lova_membranes', type: 251, fmt: '%8.0g', label: 'Liliequist/Prepontine Membranes' },
+          { name: 'lova_sella', type: 251, fmt: '%8.0g', label: 'Sella Turcica Expansion (1=Yes)' },
+          { name: 'lova_calvarial', type: 251, fmt: '%8.0g', label: 'Calvarial Scalloping/Thinning' },
+          { name: 'tap_open_press', type: 255, fmt: '%8.1f', label: 'CSF Opening Pressure (cmH2O)' },
+          { name: 'tap_vol_ml', type: 255, fmt: '%8.1f', label: 'CSF Tap Drainage Volume (ml)' },
+          { name: 'tap_pre_walk', type: 255, fmt: '%8.2f', label: 'Tap Test 10m Pre-walk Time (sec)' },
+          { name: 'tap_post_walk', type: 255, fmt: '%8.2f', label: 'Tap Test 10m Post-walk Time (sec)' },
+          { name: 'tap_walk_delta', type: 255, fmt: '%8.2f', label: 'Tap Test Walk Improvement (sec)' },
+          { name: 'inf_rout', type: 255, fmt: '%8.2f', label: 'CSF Outflow Resistance Rout' },
+          { name: 'inf_b_waves', type: 251, fmt: '%8.0g', label: 'B-waves Observed on Monitoring' },
+          { name: 'surg_performed', type: 251, fmt: '%8.0g', label: 'Surgical Intervention Performed' },
+          { name: 'surg_procedure', type: 36, fmt: '%36s', label: 'Surgical Procedure Type' },
+          { name: 'surg_date', type: 10, fmt: '%10s', label: 'Surgery Date (YYYY-MM-DD)' },
+          { name: 'operating_surg', type: 32, fmt: '%32s', label: 'Lead Operating Surgeon' },
+          { name: 'shunt_mfg', type: 24, fmt: '%24s', label: 'Shunt Valve Manufacturer' },
+          { name: 'shunt_model', type: 36, fmt: '%36s', label: 'Shunt Valve Model' },
+          { name: 'shunt_init_dp', type: 16, fmt: '%16s', label: 'Initial Differential Setting' },
+          { name: 'shunt_init_ag', type: 16, fmt: '%16s', label: 'Initial Anti-Gravity Setting' },
+          { name: 'out_6w_gait', type: 24, fmt: '%24s', label: '6-Week Gait Outcome' },
+          { name: 'out_6w_moca', type: 252, fmt: '%8.0g', label: '6-Week MoCA Score' },
+          { name: 'out_3m_gait', type: 24, fmt: '%24s', label: '3-Month Gait Outcome' },
+          { name: 'out_6m_gait', type: 24, fmt: '%24s', label: '6-Month Gait Outcome' },
+          { name: 'out_1y_gait', type: 24, fmt: '%24s', label: '1-Year Gait Outcome' },
+          { name: 'out_2y_gait', type: 24, fmt: '%24s', label: '2-Year Gait Outcome' },
+          { name: 'inphgs_pre_tot', type: 252, fmt: '%8.0g', label: 'Baseline Total INPHGS Score' },
+          { name: 'inphgs_post_tot', type: 252, fmt: '%8.0g', label: 'Latest Total INPHGS Score' },
+          { name: 'kiefer_pre_tot', type: 252, fmt: '%8.0g', label: 'Baseline Total Kiefer Score' },
+          { name: 'kiefer_post_tot', type: 252, fmt: '%8.0g', label: 'Latest Total Kiefer Score' },
+          { name: 'num_med_tx', type: 252, fmt: '%8.0g', label: 'Medical Treatments Count' },
+          { name: 'has_diamox', type: 251, fmt: '%8.0g', label: 'Received Acetazolamide/Diamox' },
+          { name: 'num_adj', type: 252, fmt: '%8.0g', label: 'Shunt Valve Adjustments Count' },
+          { name: 'num_comp', type: 252, fmt: '%8.0g', label: 'Surgical Complications Count' },
+          { name: 'has_comp', type: 251, fmt: '%8.0g', label: 'Experienced Any Complication' },
+          { name: 'num_revisions', type: 252, fmt: '%8.0g', label: 'Revision Surgeries Count' },
+          { name: 'has_revision', type: 251, fmt: '%8.0g', label: 'Underwent Revision Surgery' },
+          { name: 'num_other_surg', type: 252, fmt: '%8.0g', label: 'Other Surgeries Count' }
+        ];
+
+        rows = pList.map(p => {
+          const pRev = rList.filter(r => r.patient_id === p.id);
+          const rev6w = pRev.find(r => r.interval_name && r.interval_name.includes('6 Week'));
+          const rev3m = pRev.find(r => r.interval_name && r.interval_name.includes('3 Month'));
+          const rev6m = pRev.find(r => r.interval_name && r.interval_name.includes('6 Month'));
+          const rev1y = pRev.find(r => r.interval_name && (r.interval_name.includes('12 Month') || r.interval_name.includes('1 Year')));
+          const rev2y = pRev.find(r => r.interval_name && (r.interval_name.includes('2 Year') || r.interval_name.includes('24 Month')));
+
+          const pMeds = mList.filter(m => m.patient_id === p.id);
+          const pAdj = aList.filter(a => a.patient_id === p.id);
+          const pComp = cList.filter(c => c.patient_id === p.id);
+          const pRevs = revList.filter(r => r.patient_id === p.id);
+          const pOth = othList.filter(o => o.patient_id === p.id);
+
+          const isMale = p.gender === 'Male';
+          const ofc = p.head_circumference;
+          const isMacro = (isMale && (ofc > 58.0)) || (!isMale && (ofc > 56.0));
+
+          let radTot = p.radscale_total;
+          if (radTot == null) {
+            const radParts = [
+              p.radscale_evans || 0,
+              p.radscale_temporal || 0,
+              p.radscale_callosal || 0,
+              p.radscale_periventricular || 0,
+              p.radscale_high_convexity || 0,
+              p.radscale_sylvian || 0,
+              p.radscale_focal_sulci || 0
+            ];
+            const sumParts = radParts.reduce((a, b) => a + b, 0);
+            if (sumParts > 0) radTot = sumParts;
+          }
+
+          return {
+            study_id: p.study_id || p.id || '',
+            mrn: p.mrn || '',
+            first_name: p.first_name || '',
+            last_name: p.last_name || '',
+            age: p.age != null && !isNaN(p.age) ? parseInt(p.age, 10) : null,
+            gender: p.gender || '',
+            dob: p.dob || '',
+            handedness: p.handedness || '',
+            ethnicity: p.ethnicity || '',
+            ofc_cm: ofc != null && !isNaN(ofc) ? parseFloat(ofc) : null,
+            macrocephaly: isMacro ? 1 : 0,
+            height_cm: p.height != null && !isNaN(p.height) ? parseFloat(p.height) : null,
+            weight_kg: p.weight != null && !isNaN(p.weight) ? parseFloat(p.weight) : null,
+            bmi: p.bmi || (p.weight && p.height ? parseFloat((p.weight / ((p.height/100)*(p.height/100))).toFixed(1)) : null),
+            diagnosis: p.diagnosis_category || '',
+            metformin: p.metformin_status || 'Never',
+            met_dose_mg: p.metformin_daily_dose ? parseFloat(p.metformin_daily_dose) : null,
+            met_dur_yr: p.metformin_duration_years ? parseFloat(p.metformin_duration_years) : null,
+            hypertension: p.hypertension ? 1 : 0,
+            diabetes: p.diabetes ? 1 : 0,
+            prev_cns_inf: p.prev_cns_infection ? 1 : 0,
+            prev_trauma: p.prev_head_injury ? 1 : 0,
+            prev_sah: p.prev_sah ? 1 : 0,
+            symptom_dur_mo: p.symptoms_duration_months != null && !isNaN(p.symptoms_duration_months) ? parseInt(p.symptoms_duration_months, 10) : null,
+            gait_disturb: (p.gait_severity && !String(p.gait_severity).includes('0')) ? 1 : 0,
+            gait_sev: p.gait_severity || '',
+            falls_freq: p.falls_frequency || '',
+            cog_impair: (p.cog_severity && !String(p.cog_severity).includes('0')) ? 1 : 0,
+            baseline_moca: p.baseline_moca != null && !isNaN(p.baseline_moca) ? parseInt(p.baseline_moca, 10) : null,
+            baseline_mmse: p.baseline_mmse != null && !isNaN(p.baseline_mmse) ? parseInt(p.baseline_mmse, 10) : null,
+            urinary_symp: (p.urinary_severity && !String(p.urinary_severity).includes('0')) ? 1 : 0,
+            urinary_sev: p.urinary_severity || '',
+            lova_headache: p.lova_headache ? 1 : 0,
+            lova_vis_obsc: p.lova_visual_obscurations ? 1 : 0,
+            lova_papill: p.lova_papilledema ? 1 : 0,
+            evans_index: p.evans_index != null && !isNaN(p.evans_index) ? parseFloat(p.evans_index) : null,
+            callosal_angle: p.callosal_angle != null && !isNaN(p.callosal_angle) ? parseFloat(p.callosal_angle) : null,
+            temporal_horns: p.temporal_horns_width != null && !isNaN(p.temporal_horns_width) ? parseFloat(p.temporal_horns_width) : null,
+            third_vent_mm: p.third_ventricle_width != null && !isNaN(p.third_ventricle_width) ? parseFloat(p.third_ventricle_width) : null,
+            radscale_total: radTot != null && !isNaN(radTot) ? parseInt(radTot, 10) : null,
+            desh_tight_vtx: p.desh_tight_vertex ? 1 : 0,
+            desh_sylvian: p.desh_sylvian_dilation ? 1 : 0,
+            lova_stenosis: p.lova_aqueduct_stenosis ? 1 : 0,
+            lova_membranes: p.lova_prepontine_membranes ? 1 : 0,
+            lova_sella: p.lova_sella_expansion ? 1 : 0,
+            lova_calvarial: p.lova_calvarial_thinning ? 1 : 0,
+            tap_open_press: p.tap_opening_pressure ? parseFloat(String(p.tap_opening_pressure).split(' ')[0]) || null : null,
+            tap_vol_ml: p.tap_volume != null && !isNaN(p.tap_volume) ? parseFloat(p.tap_volume) : null,
+            tap_pre_walk: p.tap_pre_walk_time != null && !isNaN(p.tap_pre_walk_time) ? parseFloat(p.tap_pre_walk_time) : null,
+            tap_post_walk: p.tap_post_walk_time != null && !isNaN(p.tap_post_walk_time) ? parseFloat(p.tap_post_walk_time) : null,
+            tap_walk_delta: (p.tap_pre_walk_time && p.tap_post_walk_time) ? parseFloat((p.tap_pre_walk_time - p.tap_post_walk_time).toFixed(2)) : null,
+            inf_rout: p.inf_rout != null && !isNaN(p.inf_rout) ? parseFloat(p.inf_rout) : null,
+            inf_b_waves: p.inf_b_waves ? 1 : 0,
+            surg_performed: (p.surg_procedure_type && p.surg_procedure_type !== 'None') ? 1 : 0,
+            surg_procedure: p.surg_procedure_type || 'None',
+            surg_date: p.surg_date || '',
+            operating_surg: p.surg_operating_surgeon || '',
+            shunt_mfg: p.shunt_manufacturer || '',
+            shunt_model: p.shunt_model || '',
+            shunt_init_dp: p.shunt_initial_dp || '',
+            shunt_init_ag: p.shunt_initial_ag || '',
+            out_6w_gait: rev6w ? (rev6w.gait_improvement_status || '') : '',
+            out_6w_moca: rev6w && rev6w.moca_score != null ? parseInt(rev6w.moca_score, 10) : null,
+            out_3m_gait: rev3m ? (rev3m.gait_improvement_status || '') : '',
+            out_6m_gait: rev6m ? (rev6m.gait_improvement_status || '') : '',
+            out_1y_gait: rev1y ? (rev1y.gait_improvement_status || '') : '',
+            out_2y_gait: rev2y ? (rev2y.gait_improvement_status || '') : '',
+            inphgs_pre_tot: (p.inphgs_pre_gait || 0) + (p.inphgs_pre_cog || 0) + (p.inphgs_pre_urin || 0),
+            inphgs_post_tot: p.inphgs_post_gait != null ? ((p.inphgs_post_gait || 0) + (p.inphgs_post_cog || 0) + (p.inphgs_post_urin || 0)) : null,
+            kiefer_pre_tot: (p.kiefer_pre_gait || 0) + (p.kiefer_pre_cog || 0) + (p.kiefer_pre_urin || 0) + (p.kiefer_pre_ha || 0) + (p.kiefer_pre_diz || 0),
+            kiefer_post_tot: p.kiefer_post_gait != null ? ((p.kiefer_post_gait || 0) + (p.kiefer_post_cog || 0) + (p.kiefer_post_urin || 0) + (p.kiefer_post_ha || 0) + (p.kiefer_post_diz || 0)) : null,
+            num_med_tx: pMeds.length,
+            has_diamox: pMeds.some(m => JSON.stringify(m).toLowerCase().includes('diamox') || JSON.stringify(m).toLowerCase().includes('acetazolamide')) ? 1 : 0,
+            num_adj: pAdj.length,
+            num_comp: pComp.length,
+            has_comp: pComp.length > 0 ? 1 : 0,
+            num_revisions: pRevs.length,
+            has_revision: pRevs.length > 0 ? 1 : 0,
+            num_other_surg: pOth.length
+          };
+        });
+      }
+
+      const buffer = buildStata114Binary(variables, rows, label);
+
+      await this.logAuditEvent({
+        action: 'DATA_EXPORT_STATA',
+        resource: 'system',
+        details: 'Generated native Stata (.dta) dataset [' + datasetType.toUpperCase() + '] with ' + rows.length + ' observations by ' + (requestingUser?.username || 'Clinician') + '.',
+        user: requestingUser?.username,
+        role: requestingUser?.role
+      });
+
+      return buffer;
+    }
+
 
     async importFullDatabase(data) {
       if (!data || !data.patients) throw new Error("Invalid NPH & LOVA Registry backup format.");
