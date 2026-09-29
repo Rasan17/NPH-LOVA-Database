@@ -957,7 +957,7 @@ async function saveCurrentPatient() {
     lova_prepontine_membranes: getBool('f-lova-prepontine-membranes'),
     lova_third_ventricle_bowing: getBool('f-lova-third-ventricle-bowing'),
     lova_sella_expansion: getBool('f-lova-sella-expansion'),
-    lova_calvarial-thinning: getBool('f-lova-calvarial-thinning'),
+    lova_calvarial_thinning: getBool('f-lova-calvarial-thinning'),
     lova_flow_void: getBool('f-lova-flow-void'),
     imaging_modality: getVal('f-imaging-modality'),
 
