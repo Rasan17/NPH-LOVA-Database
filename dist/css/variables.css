@@ -1,0 +1,76 @@
+/* ==========================================================================
+   NPH & LOVA DATABASE DESIGN SYSTEM — CSS TOKENS & VARIABLES
+   Conceived and Designed for Neurosurgery & Clinical Biostatistics
+   ========================================================================== */
+
+:root {
+  /* Core Color Palette (Dark Theme Default) */
+  --bg-app: #080c14;
+  --bg-surface: #0f172a;
+  --bg-surface-elevated: #1e293b;
+  --bg-card: rgba(15, 23, 42, 0.88);
+  --bg-card-hover: rgba(30, 41, 59, 0.95);
+  --bg-input: #0b1329;
+  --bg-glass: rgba(15, 23, 42, 0.72);
+
+  /* Borders & Dividers */
+  --border-subtle: rgba(148, 163, 184, 0.14);
+  --border-strong: rgba(148, 163, 184, 0.28);
+  --border-focus: #38bdf8;
+
+  /* Typography */
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+
+  /* Specialty Accent Tokens */
+  --accent-csf: #0284c7;           /* Cerebrospinal Fluid / Hydrocephalus */
+  --accent-csf-glow: #38bdf8;
+  --accent-lova: #8b5cf6;          /* LOVA specialty / Prepontine */
+  --accent-inph: #0ea5e9;          /* iNPH specialty */
+  --accent-success: #10b981;       /* Post-op recovery / Tap test positive */
+  --accent-warning: #f59e0b;       /* Valve adjustments / Titrations */
+  --accent-danger: #f43f5e;        /* Complications / Shunt Malfunction */
+  --accent-metformin: #14b8a6;     /* Metformin / Medical therapy */
+
+  /* Radius & Shadows */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 9999px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.35), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(56, 189, 248, 0.2);
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="light"] {
+  --bg-app: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-card-hover: #ffffff;
+  --bg-input: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.85);
+
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-focus: #0284c7;
+
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #64748b;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.12), 0 4px 6px -4px rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 15px rgba(2, 132, 199, 0.15);
+}

@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "identifier": "com.nphlova.database",
   "build": {
-    "frontendDist": "../"
+    "beforeBuildCommand": "node build.js",
+    "beforeDevCommand": "node build.js",
+    "frontendDist": "../dist"
   },
   "app": {
     "withGlobalTauri": true,

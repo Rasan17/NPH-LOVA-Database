@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NPH & LOVA Clinical Registry & Database System</title>
+  <meta name="description" content="Dedicated Registry for Normal Pressure Hydrocephalus and Long-Standing Overt Ventriculomegaly in Adults (LOVA)">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a10 10 0 0 0-10 10c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">NPH & LOVA CLINICAL REGISTRY</h1>
+          <div class="brand-subtitle">Specialised Neurosurgical & CSF Dynamics Database</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="search-box">
+          <input type="text" id="global-patient-search" placeholder="Search patient by MRN, name..." />
+        </div>
+
+        <select id="patient-select-dropdown" class="header-select">
+          <option value="">-- Select Patient --</option>
+        </select>
+
+        <button id="btn-new-patient" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          New Patient
+        </button>
+
+        <button id="btn-export-db" class="btn btn-secondary" title="Export database to SQLite / JSON">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Export
+        </button>
+
+        <button id="btn-import-db" class="btn btn-secondary" title="Import database from JSON backup">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          Import
+        </button>
+        <input type="file" id="file-import-input" accept=".json" style="display:none" />
+
+        <button id="btn-about-info" class="btn btn-ghost" title="About & Attribution">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        </button>
+
+        <button id="btn-theme-toggle" class="btn btn-ghost" title="Toggle Dark/Light Mode">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top Stats Bar -->
+    <section class="stats-ribbon">
+      <div class="stat-item">
+        <span class="stat-label">TOTAL PATIENTS</span>
+        <span class="stat-value" id="stat-total-patients">0</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">iNPH COHORT</span>
+        <span class="stat-value text-csf" id="stat-nph-patients">0</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">ADULT LOVA</span>
+        <span class="stat-value text-lova" id="stat-lova-patients">0</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">SURGICAL PROCEDURES</span>
+        <span class="stat-value" id="stat-surgeries">0</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">SHUNT ADJUSTMENTS</span>
+        <span class="stat-value" id="stat-adjustments">0</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">METFORMIN REGISTRY</span>
+        <span class="stat-value text-amber" id="stat-metformin">0</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-label">STORAGE ENGINE</span>
+        <span class="stat-value text-emerald font-mono" id="stat-db-engine">SQLite (Native/Tauri)</span>
+      </div>
+    </section>
+
+    <!-- Patient Context Bar -->
+    <section class="patient-context-bar" id="patient-context-banner">
+      <div class="patient-meta-group">
+        <div class="patient-name-large" id="banner-patient-name">No Patient Selected</div>
+        <div class="patient-pill-badges">
+          <span class="badge badge-secondary font-mono" id="banner-patient-mrn">MRN: ---</span>
+          <span class="badge badge-secondary" id="banner-patient-age-gender">-- yrs / -</span>
+          <span class="badge badge-csf" id="banner-patient-dx">Diagnosis: ---</span>
+          <span class="badge badge-neutral" id="banner-patient-ofc">OFC: -- cm</span>
+          <span class="badge badge-amber" id="banner-macrocephaly-badge" style="display:none;">Adult Macrocephaly</span>
+          <span class="badge badge-purple" id="banner-patient-shunt">Shunt: ---</span>
+        </div>
+      </div>
+      <div class="patient-quick-actions">
+        <button id="btn-save-current" class="btn btn-success">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Save Changes
+        </button>
+      </div>
+    </section>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="tabs-nav" id="main-tabs-nav">
+      <button class="tab-btn active" data-tab="tab-demographics">1. Demographics & OFC</button>
+      <button class="tab-btn" data-tab="tab-history">2. Past History & Metformin</button>
+      <button class="tab-btn" data-tab="tab-presentation">3. Clinical Presentation</button>
+      <button class="tab-btn" data-tab="tab-differential">4. Neurology & Spine Exclusions</button>
+      <button class="tab-btn" data-tab="tab-imaging">5. Neuroimaging & Radscale</button>
+      <button class="tab-btn" data-tab="tab-csf">6. CSF Studies & Tap Test</button>
+      <button class="tab-btn" data-tab="tab-treatment">7. Surgery & Shunt Hardware</button>
+      <button class="tab-btn" data-tab="tab-adjustments">8. Shunt Adjustments Log</button>
+      <button class="tab-btn" data-tab="tab-outcomes">9. Outcomes & Satisfaction</button>
+      <button class="tab-btn" data-tab="tab-complications">10. Complications & Revisions</button>
+      <button class="tab-btn" data-tab="tab-cohort">11. Cohort Analytics</button>
+    </nav>
+
+    <!-- Tab Panels Container -->
+    <main class="tab-content-area">
+
+      <!-- TAB 1: DEMOGRAPHICS -->
+      <section class="tab-panel active" id="tab-demographics">
+        <div class="panel-header">
+          <h2>Patient Demographics & Physical Examination</h2>
+          <p class="panel-description">Essential patient identification, primary diagnosis category, and adult head circumference measurements.</p>
+        </div>
+
+        <form id="form-demographics" class="grid-form">
+          <div class="card grid-span-12">
+            <h3 class="card-title">Patient Identification & Classification</h3>
+            <div class="form-grid grid-cols-4">
+              <div class="form-group">
+                <label for="f-mrn">Medical Record Number (MRN)*</label>
+                <input type="text" id="f-mrn" class="form-control" required placeholder="e.g. NPH-2026-001" />
+              </div>
+              <div class="form-group">
+                <label for="f-first-name">First Name*</label>
+                <input type="text" id="f-first-name" class="form-control" required placeholder="First name" />
+              </div>
+              <div class="form-group">
+                <label for="f-last-name">Last Name*</label>
+                <input type="text" id="f-last-name" class="form-control" required placeholder="Last name" />
+              </div>
+              <div class="form-group">
+                <label for="f-diagnosis-category">Primary Category*</label>
+                <select id="f-diagnosis-category" class="form-control" required>
+                  <option value="iNPH">Idiopathic NPH (iNPH)</option>
+                  <option value="sNPH">Secondary NPH (sNPH)</option>
+                  <option value="LOVA">Long-Standing Overt Ventriculomegaly in Adults (LOVA)</option>
+                  <option value="Mixed">Mixed / Transitional</option>
+                  <option value="Under Evaluation">Under Evaluation</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="f-dob">Date of Birth</label>
+                <input type="date" id="f-dob" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="f-age">Age at Presentation (years)</label>
+                <input type="number" id="f-age" class="form-control" min="18" max="115" placeholder="72" />
+              </div>
+              <div class="form-group">
+                <label for="f-gender">Gender</label>
+                <select id="f-gender" class="form-control">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="f-handedness">Handedness</label>
+                <select id="f-handedness" class="form-control">
+                  <option value="Right">Right</option>
+                  <option value="Left">Left</option>
+                  <option value="Ambidextrous">Ambidextrous</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Head Circumference & Macrocephaly in Adults -->
+          <div class="card grid-span-12 card-highlight-lova">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Adult Head Circumference (OFC) & Physical Phenotype</h3>
+                <p class="card-subtitle">Head circumference is a vital discriminator for <strong>Long-Standing Overt Ventriculomegaly in Adults (LOVA)</strong>, reflecting childhood macrocephaly prior to cranial suture closure.</p>
+              </div>
+              <span id="ofc-eval-badge" class="badge badge-secondary">OFC Normal</span>
+            </div>
+
+            <div class="form-grid grid-cols-4 mt-3">
+              <div class="form-group">
+                <label for="f-head-circumference">Head Circumference OFC (cm)*</label>
+                <input type="number" step="0.1" id="f-head-circumference" class="form-control" placeholder="e.g. 59.5" />
+                <span class="help-text">Macrocephaly threshold: &gt;58 cm in males, &gt;56 cm in females (or &gt;97th percentile).</span>
+              </div>
+              <div class="form-group">
+                <label for="f-height">Height (cm)</label>
+                <input type="number" step="0.5" id="f-height" class="form-control" placeholder="175" />
+              </div>
+              <div class="form-group">
+                <label for="f-weight">Weight (kg)</label>
+                <input type="number" step="0.5" id="f-weight" class="form-control" placeholder="82" />
+              </div>
+              <div class="form-group">
+                <label for="f-bmi">Calculated BMI</label>
+                <input type="text" id="f-bmi" class="form-control font-mono" readonly placeholder="--" />
+              </div>
+
+              <div class="form-group grid-span-4">
+                <div class="checkbox-pill-group">
+                  <label class="checkbox-pill">
+                    <input type="checkbox" id="f-childhood-hat-size">
+                    <span>History of unusually large head or large hat size in childhood / adolescence</span>
+                  </label>
+                  <label class="checkbox-pill">
+                    <input type="checkbox" id="f-delayed-motor-milestones">
+                    <span>History of delayed childhood motor milestones / late walking</span>
+                  </label>
+                  <label class="checkbox-pill">
+                    <input type="checkbox" id="f-craniofacial-disproportion">
+                    <span>Prominent forehead / frontal bossing / craniofacial disproportion</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Administrative details -->
+          <div class="card grid-span-12">
+            <h3 class="card-title">Encounter & Administrative Tracking</h3>
+            <div class="form-grid grid-cols-3">
+              <div class="form-group">
+                <label for="f-presentation-date">Date of First Presentation</label>
+                <input type="date" id="f-presentation-date" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="f-consultant-surgeon">Consultant Neurosurgeon</label>
+                <input type="text" id="f-consultant-surgeon" class="form-control" placeholder="Mr / Miss / Dr" />
+              </div>
+              <div class="form-group">
+                <label for="f-consultant-neurologist">Consultant Neurologist</label>
+                <input type="text" id="f-consultant-neurologist" class="form-control" placeholder="Dr" />
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- TAB 2: PAST HISTORY & METFORMIN -->
+      <section class="tab-panel" id="tab-history">
+        <div class="panel-header">
+          <h2>Past Medical & Surgical History & Pharmacotherapy</h2>
+          <p class="panel-description">Systematic recording of prior operations (neck, chest, abdomen for shunt viability), prior CNS insults, obesity, and specialised drug tracking including Metformin.</p>
+        </div>
+
+        <form id="form-history" class="grid-form">
+          <!-- Anatomical Operations & Cavity Viability -->
+          <div class="card grid-span-6">
+            <h3 class="card-title">Previous Operations: Neck, Chest & Abdomen</h3>
+            <p class="card-subtitle">Critical to determine viability of peritoneal, pleural, or atrial catheter placement.</p>
+            <div class="form-group mt-3">
+              <label class="checkbox-row">
+                <input type="checkbox" id="f-prev-neck-surgery">
+                <span><strong>Previous Neck Surgery / Tracheostomy / Carotid Surgery</strong></span>
+              </label>
+              <textarea id="f-prev-neck-notes" class="form-control mt-1" rows="2" placeholder="Details of neck procedures (e.g. carotid endarterectomy, anterior cervical discectomy)..."></textarea>
+            </div>
+            <div class="form-group mt-3">
+              <label class="checkbox-row">
+                <input type="checkbox" id="f-prev-chest-surgery">
+                <span><strong>Previous Thoracic / Chest Surgery</strong></span>
+              </label>
+              <textarea id="f-prev-chest-notes" class="form-control mt-1" rows="2" placeholder="Details of thoracotomy, pleurodesis, pacemaker, sternotomy (relevant for ventriculopleural or VA shunts)..."></textarea>
+            </div>
+            <div class="form-group mt-3">
+              <label class="checkbox-row">
+                <input type="checkbox" id="f-prev-abdo-surgery">
+                <span><strong>Previous Abdominal / Pelvic Surgery (Adhesion Risk)</strong></span>
+              </label>
+              <textarea id="f-prev-abdo-notes" class="form-control mt-1" rows="2" placeholder="Laparotomy, peritonitis, hernia repairs, bowel resections, bariatric surgery (impact on peritoneal absorption)..."></textarea>
+            </div>
+          </div>
+
+          <!-- Neurosurgical History & CNS Insults -->
+          <div class="card grid-span-6">
+            <h3 class="card-title">Previous Neurological & CNS Insults</h3>
+            <p class="card-subtitle">Identifies secondary etiologies (sNPH) vs idiopathic or congenital long-standing patterns.</p>
+            <div class="form-group mt-3">
+              <label class="checkbox-row">
+                <input type="checkbox" id="f-prev-head-injury">
+                <span><strong>Previous Traumatic Brain Injury (TBI) / Head Injury</strong></span>
+              </label>
+              <textarea id="f-prev-head-injury-notes" class="form-control mt-1" rows="2" placeholder="Severity, loss of consciousness, contusions, traumatic SAH, date of injury..."></textarea>
+            </div>
+            <div class="form-group mt-3">
+              <label class="checkbox-row">
+                <input type="checkbox" id="f-prev-neurosurgery">
+                <span><strong>Previous Cranial Surgery / Hydrocephalus Treatment</strong></span>
+              </label>
+              <textarea id="f-prev-neurosurgery-notes" class="form-control mt-1" rows="2" placeholder="Prior shunt, craniotomy, aneurysm clipping, posterior fossa decompression..."></textarea>
+            </div>
+            <div class="form-group mt-3">
+              <label class="checkbox-row">
+                <input type="checkbox" id="f-prev-cns-infection">
+                <span><strong>Previous CNS Infection / Meningitis / Ventriculitis</strong></span>
+              </label>
+              <textarea id="f-prev-cns-infection-notes" class="form-control mt-1" rows="2" placeholder="Bacterial/viral/tuberculous meningitis, basal arachnoiditis..."></textarea>
+            </div>
+            <div class="form-group mt-3">
+              <label class="checkbox-row">
+                <input type="checkbox" id="f-prev-sah">
+                <span><strong>Previous Aneurysmal or Spontaneous Subarachnoid Hemorrhage</strong></span>
+              </label>
+              <input type="text" id="f-prev-sah-notes" class="form-control mt-1" placeholder="Year, etiology, WFNS grade..." />
+            </div>
+          </div>
+
+          <!-- Dedicated Metformin & Glymphatic Pharmacotherapy Section -->
+          <div class="card grid-span-12 card-highlight-amber">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Metformin & CSF Dynamics / Glymphatic Pharmacotherapy</h3>
+                <p class="card-subtitle">Tracking Metformin therapy (dose, duration, indication) to investigate its documented interaction with glymphatic clearance, CSF production, and hydrocephalus progression.</p>
+              </div>
+              <span class="badge badge-amber font-mono">Special Research Field</span>
+            </div>
+
+            <div class="form-grid grid-cols-4 mt-3">
+              <div class="form-group">
+                <label for="f-metformin-status">Metformin Exposure</label>
+                <select id="f-metformin-status" class="form-control">
+                  <option value="Never">Never Taken</option>
+                  <option value="Active">Currently Active / Regular User</option>
+                  <option value="Past">Past User (Discontinued)</option>
+                  <option value="Unknown">Unknown</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="f-metformin-dose">Daily Dose (mg/day)</label>
+                <input type="text" id="f-metformin-dose" class="form-control" placeholder="e.g. 500mg bd (1000mg)" />
+              </div>
+              <div class="form-group">
+                <label for="f-metformin-duration">Duration of Use (years)</label>
+                <input type="number" step="0.5" id="f-metformin-duration" class="form-control" placeholder="e.g. 5.5" />
+              </div>
+              <div class="form-group">
+                <label for="f-metformin-indication">Indication</label>
+                <select id="f-metformin-indication" class="form-control">
+                  <option value="Type 2 Diabetes">Type 2 Diabetes Mellitus</option>
+                  <option value="Prediabetes / Insulin Resistance">Prediabetes / Insulin Resistance</option>
+                  <option value="PCOS">PCOS</option>
+                  <option value="Longevity / Off-label">Longevity / Off-label</option>
+                  <option value="N/A">Not Applicable</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-4">
+                <label for="f-metformin-notes">Metformin & Glymphatic Observations / Comments</label>
+                <textarea id="f-metformin-notes" class="form-control" rows="2" placeholder="Record any clinical observations regarding CSF dynamics, response to tap test, or metabolic correlates with hydrocephalus..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Other Comorbidities & Medications -->
+          <div class="card grid-span-12">
+            <h3 class="card-title">General Medical Comorbidities & Anticoagulation</h3>
+            <div class="form-grid grid-cols-3">
+              <div class="form-group">
+                <label class="checkbox-row">
+                  <input type="checkbox" id="f-obesity-status">
+                  <span><strong>Obesity (BMI &ge; 30 kg/m&sup2;)</strong></span>
+                </label>
+                <select id="f-obesity-grade" class="form-control mt-1">
+                  <option value="None">Non-obese (BMI &lt; 30)</option>
+                  <option value="Class 1">Class 1 Obesity (BMI 30 - 34.9)</option>
+                  <option value="Class 2">Class 2 Obesity (BMI 35 - 39.9)</option>
+                  <option value="Class 3">Class 3 Severe/Morbid (BMI &ge; 40)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="f-anticoagulation">Anticoagulants / Antiplatelets</label>
+                <input type="text" id="f-anticoagulation" class="form-control" placeholder="Aspirin, Clopidogrel, DOAC (Apixaban/Rivaroxaban), Warfarin" />
+                <span class="help-text">Important for tap test & surgical planning.</span>
+              </div>
+
+              <div class="form-group">
+                <label for="f-other-comorbidities">Other Cardiovascular & Medical Conditions</label>
+                <input type="text" id="f-other-comorbidities" class="form-control" placeholder="Hypertension, IHD, CKD, Atrial Fibrillation" />
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- TAB 3: CLINICAL PRESENTATION -->
+      <section class="tab-panel" id="tab-presentation">
+        <div class="panel-header">
+          <h2>Clinical Presentation & Adams-Hakim Triad</h2>
+          <p class="panel-description">Detailed profiling of gait apraxia, cognitive impairment, urinary urgency/incontinence, and distinguishing LOVA features (headache, visual obscurations).</p>
+        </div>
+
+        <form id="form-presentation" class="grid-form">
+          <!-- Gait Disturbance -->
+          <div class="card grid-span-4">
+            <h3 class="card-title">1. Gait Disturbance (Adams-Hakim)</h3>
+            <div class="form-group mt-2">
+              <label for="f-gait-severity">Severity & Functional Impact</label>
+              <select id="f-gait-severity" class="form-control">
+                <option value="0 - Normal">0 - Normal walking</option>
+                <option value="1 - Mild Unsteadiness">1 - Mild unsteadiness, tandem abnormal</option>
+                <option value="2 - Moderate Difficulty">2 - Moderate difficulty, walks independently without aid</option>
+                <option value="3 - Requires Walking Aid">3 - Requires cane, walker or physical support</option>
+                <option value="4 - Wheelchair / Non-ambulant">4 - Wheelchair-bound / bedridden / non-ambulant</option>
+              </select>
+            </div>
+            <div class="form-group mt-2">
+              <label>Phenotypic Gait Features</label>
+              <div class="checkbox-list">
+                <label><input type="checkbox" id="f-gait-magnetic"> Magnetic / glued-to-the-floor gait</label>
+                <label><input type="checkbox" id="f-gait-broad-based"> Broad-based / wide stance</label>
+                <label><input type="checkbox" id="f-gait-short-steps"> Short-shuffled steps / festination</label>
+                <label><input type="checkbox" id="f-gait-turning-multi"> Multi-step turning (&gt;3 steps for 180&deg;)</label>
+                <label><input type="checkbox" id="f-gait-freezing"> Freezing of gait / motor blocks</label>
+                <label><input type="checkbox" id="f-gait-falls"> Recurrent unprovoked falls</label>
+              </div>
+            </div>
+            <div class="form-group mt-2">
+              <label for="f-falls-frequency">Falls Frequency</label>
+              <input type="text" id="f-falls-frequency" class="form-control" placeholder="e.g. 2-3 falls per month" />
+            </div>
+          </div>
+
+          <!-- Cognitive Impairment -->
+          <div class="card grid-span-4">
+            <h3 class="card-title">2. Cognitive Impairment</h3>
+            <div class="form-group mt-2">
+              <label for="f-cog-severity">Severity & Domain Profile</label>
+              <select id="f-cog-severity" class="form-control">
+                <option value="0 - Normal">0 - Normal cognitive function</option>
+                <option value="1 - Subjective Complaints">1 - Subjective memory complaints, no functional deficit</option>
+                <option value="2 - Mild Executive / Bradyphrenia">2 - Mild executive dysfunction / psychomotor slowing</option>
+                <option value="3 - Moderate Subcortical Dementia">3 - Moderate dementia, needs assistance in complex tasks</option>
+                <option value="4 - Severe Dementia / Dependent">4 - Severe dementia, fully dependent</option>
+              </select>
+            </div>
+            <div class="form-group mt-2">
+              <label>Subcortical Cognitive Features</label>
+              <div class="checkbox-list">
+                <label><input type="checkbox" id="f-cog-bradyphrenia"> Bradyphrenia (slowed information processing)</label>
+                <label><input type="checkbox" id="f-cog-executive"> Executive dysfunction (planning, dual-task)</label>
+                <label><input type="checkbox" id="f-cog-apathy"> Apathy / abulia / decreased initiation</label>
+                <label><input type="checkbox" id="f-cog-attention"> Impaired sustained attention</label>
+                <label><input type="checkbox" id="f-cog-retrieval"> Impaired memory retrieval (cues help)</label>
+              </div>
+            </div>
+            <div class="form-group mt-2">
+              <div class="form-grid grid-cols-2">
+                <div>
+                  <label for="f-baseline-moca">Baseline MoCA (/30)</label>
+                  <input type="number" id="f-baseline-moca" class="form-control" min="0" max="30" placeholder="21" />
+                </div>
+                <div>
+                  <label for="f-baseline-mmse">Baseline MMSE (/30)</label>
+                  <input type="number" id="f-baseline-mmse" class="form-control" min="0" max="30" placeholder="24" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Urinary Symptoms -->
+          <div class="card grid-span-4">
+            <h3 class="card-title">3. Urinary Continence</h3>
+            <div class="form-group mt-2">
+              <label for="f-urinary-severity">Continence Impairment Grade</label>
+              <select id="f-urinary-severity" class="form-control">
+                <option value="0 - Normal">0 - Normal micturition</option>
+                <option value="1 - Pollakisuria / Urgency">1 - Nocturia / pollakisuria / urgency without leakage</option>
+                <option value="2 - Occasional Incontinence">2 - Urge incontinence, occasional (1-2x/week)</option>
+                <option value="3 - Frequent Incontinence">3 - Frequent incontinence (&gt;once daily), uses pads</option>
+                <option value="4 - Total / Unaware">4 - Total lack of bladder control, diaper dependent</option>
+              </select>
+            </div>
+            <div class="form-group mt-2">
+              <label>Urinary Profile Features</label>
+              <div class="checkbox-list">
+                <label><input type="checkbox" id="f-urin-urgency"> Intense urgency (rush to bathroom)</label>
+                <label><input type="checkbox" id="f-urin-nocturia"> Severe nocturia (&ge; 3 times per night)</label>
+                <label><input type="checkbox" id="f-urin-lack-concern"> Frontal lack of concern regarding wetness</label>
+                <label><input type="checkbox" id="f-urin-fecal"> Fecal incontinence (rare / advanced)</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Specific LOVA / ICP Symptoms -->
+          <div class="card grid-span-12 card-highlight-lova">
+            <h3 class="card-title">Distinguishing LOVA & Intermittent ICP Elevation Features</h3>
+            <p class="card-subtitle">Adults with LOVA frequently exhibit symptoms of fluctuating high ICP superimposed on ventriculomegaly.</p>
+            <div class="form-grid grid-cols-4 mt-2">
+              <div class="form-group">
+                <label class="checkbox-row">
+                  <input type="checkbox" id="f-lova-headache">
+                  <span><strong>Morning / Episodic Headache</strong></span>
+                </label>
+                <input type="text" id="f-lova-headache-desc" class="form-control mt-1" placeholder="Wakens patient, worse coughing/bending..." />
+              </div>
+              <div class="form-group">
+                <label class="checkbox-row">
+                  <input type="checkbox" id="f-lova-visual-obscurations">
+                  <span><strong>Transient Visual Obscurations</strong></span>
+                </label>
+                <input type="text" id="f-lova-visual-desc" class="form-control mt-1" placeholder="Brief darkening upon standing, diplopia..." />
+              </div>
+              <div class="form-group">
+                <label class="checkbox-row">
+                  <input type="checkbox" id="f-lova-papilledema">
+                  <span><strong>Fundoscopy / Papilledema</strong></span>
+                </label>
+                <select id="f-lova-papilledema-grade" class="form-control mt-1">
+                  <option value="Absent">No Papilledema</option>
+                  <option value="Optic Atrophy">Optic Disc Pallor / Chronic Atrophy</option>
+                  <option value="Grade 1-2">Mild / Moderate Papilledema</option>
+                  <option value="Grade 3-5">Severe / Marked Papilledema</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="f-symptoms-duration">Total Duration of Symptoms (months)</label>
+                <input type="number" id="f-symptoms-duration" class="form-control" placeholder="e.g. 24" />
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- TAB 4: NEUROLOGY REVIEW & EXCLUSIONS -->
+      <section class="tab-panel" id="tab-differential">
+        <div class="panel-header">
+          <h2>Neurology Review & Differential Diagnosis Exclusions</h2>
+          <p class="panel-description">Rigorous multidisciplinary evaluation excluding mimicking neurodegenerative syndromes and confounding spinal cord or canal pathologies.</p>
+        </div>
+
+        <form id="form-differential" class="grid-form">
+          <!-- Neurodegenerative Conditions Checklist -->
+          <div class="card grid-span-6">
+            <h3 class="card-title">1. Neurodegenerative Mimic Exclusions</h3>
+            <p class="card-subtitle">Exclusion of primary neurodegenerative diseases causing gait and cognitive decline.</p>
+            
+            <div class="exclusion-table mt-3">
+              <div class="exclusion-row">
+                <div class="exclusion-info">
+                  <strong>Alzheimer's Disease (AD)</strong>
+                  <span>Early cortical amnesia, word-finding deficits, temporal lobe atrophy</span>
+                </div>
+                <select id="f-excl-ad" class="form-control form-control-sm">
+                  <option value="Excluded">Excluded</option>
+                  <option value="Possible Co-pathology">Possible Co-pathology</option>
+                  <option value="Primary Diagnosis">Primary Diagnosis</option>
+                  <option value="Not Evaluated">Not Evaluated</option>
+                </select>
+              </div>
+
+              <div class="exclusion-row">
+                <div class="exclusion-info">
+                  <strong>Parkinson's Disease (PD)</strong>
+                  <span>Resting 4-6Hz tremor, prominent cogwheel rigidity, marked asymmetry</span>
+                </div>
+                <select id="f-excl-pd" class="form-control form-control-sm">
+                  <option value="Excluded">Excluded</option>
+                  <option value="Possible Co-pathology">Possible Co-pathology</option>
+                  <option value="Primary Diagnosis">Primary Diagnosis</option>
+                  <option value="Not Evaluated">Not Evaluated</option>
+                </select>
+              </div>
+
+              <div class="exclusion-row">
+                <div class="exclusion-info">
+                  <strong>Progressive Supranuclear Palsy (PSP)</strong>
+                  <span>Vertical supranuclear gaze palsy, early backward falls, humming bird sign</span>
+                </div>
+                <select id="f-excl-psp" class="form-control form-control-sm">
+                  <option value="Excluded">Excluded</option>
+                  <option value="Suspicious / Unclear">Suspicious / Unclear</option>
+                  <option value="Confirmed PSP">Confirmed PSP</option>
+                </select>
+              </div>
+
+              <div class="exclusion-row">
+                <div class="exclusion-info">
+                  <strong>Multiple System Atrophy (MSA) / CBD</strong>
+                  <span>Severe dysautonomia, stridor, ataxia, corticobasal alien limb, apraxia</span>
+                </div>
+                <select id="f-excl-msa" class="form-control form-control-sm">
+                  <option value="Excluded">Excluded</option>
+                  <option value="Suspicious / Unclear">Suspicious / Unclear</option>
+                </select>
+              </div>
+
+              <div class="exclusion-row">
+                <div class="exclusion-info">
+                  <strong>Dementia with Lewy Bodies (DLB)</strong>
+                  <span>Visual hallucinations, REM sleep behavior disorder, fluctuating cognition</span>
+                </div>
+                <select id="f-excl-dlb" class="form-control form-control-sm">
+                  <option value="Excluded">Excluded</option>
+                  <option value="Possible Co-pathology">Possible Co-pathology</option>
+                </select>
+              </div>
+
+              <div class="exclusion-row">
+                <div class="exclusion-info">
+                  <strong>Vascular Dementia / Subcortical Binswanger</strong>
+                  <span>Stepwise deterioration, focal neurologic signs, extensive lacunar infarcts</span>
+                </div>
+                <select id="f-excl-vad" class="form-control form-control-sm">
+                  <option value="Excluded">Excluded</option>
+                  <option value="Concomitant Small Vessel Disease">Concomitant SVD</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group mt-3">
+              <label for="f-dopamine-challenge">Dopaminergic Challenge (Levodopa Response)</label>
+              <select id="f-dopamine-challenge" class="form-control">
+                <option value="Not Performed">Not Performed</option>
+                <option value="No Response (Expected in NPH)">No Response (Expected in NPH)</option>
+                <option value="Positive Response (Suggests Parkinsonism)">Positive Response (Suggests Parkinsonism)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Spinal Pathology Exclusions -->
+          <div class="card grid-span-6">
+            <h3 class="card-title">2. Spinal Cord & Canal Pathology Exclusions</h3>
+            <p class="card-subtitle">Exclusion of spine disease mimicking or compounding gait impairment in the elderly.</p>
+
+            <div class="exclusion-table mt-3">
+              <div class="exclusion-row">
+                <div class="exclusion-info">
+                  <strong>Cervical Spondylotic Myelopathy (CSM)</strong>
+                  <span>Hyperreflexia, positive Hoffman's/Babinski, spasticity, cord compression on MRI</span>
+                </div>
+                <select id="f-excl-csm" class="form-control form-control-sm">
+                  <option value="Excluded (Normal Spine MRI)">Excluded (Normal Spine MRI)</option>
+                  <option value="Mild Spondylosis (No Cord Signal)">Mild Spondylosis (No Signal)</option>
+                  <option value="Active Myelopathy (Needs Spine Surgery)">Active Myelopathy</option>
+                  <option value="Spine MRI Not Done">Spine MRI Not Done</option>
+                </select>
+              </div>
+
+              <div class="exclusion-row">
+                <div class="exclusion-info">
+                  <strong>Lumbar Spinal Canal Stenosis (LSS)</strong>
+                  <span>Neurogenic claudication, pain relieved by forward flexion, sciatica</span>
+                </div>
+                <select id="f-excl-lss" class="form-control form-control-sm">
+                  <option value="Excluded">Excluded</option>
+                  <option value="Co-existing Lumbar Stenosis">Co-existing Stenosis</option>
+                  <option value="Severe Stenosis (Primary Cause)">Severe Stenosis (Primary)</option>
+                </select>
+              </div>
+
+              <div class="exclusion-row">
+                <div class="exclusion-info">
+                  <strong>Peripheral Neuropathy / Proprioceptive Loss</strong>
+                  <span>Glove/stocking sensory deficit, absent ankle jerks, impaired vibration sense</span>
+                </div>
+                <select id="f-excl-neuropathy" class="form-control form-control-sm">
+                  <option value="Excluded (Normal Sensation)">Excluded (Normal)</option>
+                  <option value="Mild Diabetic/Age-Related">Mild Diabetic/Age-Related</option>
+                  <option value="Severe Sensory Ataxia">Severe Sensory Ataxia</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group mt-3">
+              <label for="f-spine-imaging-summary">Spine Imaging & Exam Summary</label>
+              <textarea id="f-spine-imaging-summary" class="form-control" rows="3" placeholder="MRI cervical/lumbar spine findings, reflex status, clonus, sensory levels..."></textarea>
+            </div>
+          </div>
+
+          <!-- MDT Consensus & Decision -->
+          <div class="card grid-span-12">
+            <h3 class="card-title">Multidisciplinary Team (MDT) Decision</h3>
+            <div class="form-grid grid-cols-3">
+              <div class="form-group">
+                <label for="f-mdt-date">MDT Review Date</label>
+                <input type="date" id="f-mdt-date" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="f-mdt-decision">Consensus Management Decision*</label>
+                <select id="f-mdt-decision" class="form-control" required>
+                  <option value="Recommend Shunt Surgery">Recommend Shunt Surgery</option>
+                  <option value="Recommend ETV">Recommend ETV</option>
+                  <option value="Recommend ETV + Disruption of Membranes">Recommend ETV + Disruption of Membranes</option>
+                  <option value="Proceed to CSF Dynamic Study (Tap / Drain)">Proceed to CSF Dynamic Study (Tap / Drain)</option>
+                  <option value="Conservative / Surveillance">Conservative / Surveillance</option>
+                  <option value="Decline Surgery (High Comorbidity)">Decline Surgery (High Comorbidity)</option>
+                  <option value="Address Alternative Pathology First">Address Alternative Pathology First</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="f-mdt-confidence">Clinical Confidence / Likelihood of Response</label>
+                <select id="f-mdt-confidence" class="form-control">
+                  <option value="Definite Responder (>80%)">Definite Responder (&gt;80%)</option>
+                  <option value="Probable Responder (60-80%)">Probable Responder (60-80%)</option>
+                  <option value="Possible / Borderline (40-60%)">Possible / Borderline (40-60%)</option>
+                  <option value="Unlikely (<40%)">Unlikely (&lt;40%)</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-3">
+                <label for="f-mdt-notes">MDT Discussion & Consensus Notes</label>
+                <textarea id="f-mdt-notes" class="form-control" rows="2" placeholder="Record rationale, discussion between neurology and neurosurgery, risk-benefit balance..."></textarea>
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- TAB 5: NEUROIMAGING & RADSCALE -->
+      <section class="tab-panel" id="tab-imaging">
+        <div class="panel-header">
+          <h2>Neuroimaging Metrics & iNPH Radscale Evaluation</h2>
+          <p class="panel-description">Quantitative ventricular dimensions, DESH markers, and distinct LOVA hallmarks (aqueductal web/stenosis, prepontine membranes, sella remodeling).</p>
+        </div>
+
+        <form id="form-imaging" class="grid-form">
+          <!-- Quantitative Morphometry -->
+          <div class="card grid-span-6">
+            <h3 class="card-title">Morphometric Measurements</h3>
+            <div class="form-grid grid-cols-2">
+              <div class="form-group">
+                <label for="f-evans-index">Evans' Index (Frontal Horn / Cranial Diam)*</label>
+                <input type="number" step="0.01" id="f-evans-index" class="form-control font-mono" placeholder="0.38" />
+                <span class="help-text">Threshold &gt; 0.30 denotes ventriculomegaly.</span>
+              </div>
+              <div class="form-group">
+                <label for="f-callosal-angle">Callosal Angle (Coronal, &deg;)*</label>
+                <input type="number" step="1" id="f-callosal-angle" class="form-control font-mono" placeholder="78" />
+                <span class="help-text">Normal 100-120&deg;; iNPH characteristically &lt; 90&deg;.</span>
+              </div>
+              <div class="form-group">
+                <label for="f-temporal-horns">Temporal Horn Width (mm)</label>
+                <input type="number" step="0.5" id="f-temporal-horns" class="form-control" placeholder="6.2" />
+                <span class="help-text">&ge; 4 mm indicates disproportionate enlargement.</span>
+              </div>
+              <div class="form-group">
+                <label for="f-third-ventricle-width">3rd Ventricle Width (mm)</label>
+                <input type="number" step="0.5" id="f-third-ventricle-width" class="form-control" placeholder="14.5" />
+              </div>
+            </div>
+
+            <!-- DESH Sign -->
+            <div class="highlight-box mt-3">
+              <h4 class="text-sm font-semibold">DESH Sign (Disproportionately Enlarged Subarachnoid space Hydrocephalus)</h4>
+              <p class="text-xs text-secondary mt-1">Hallmark of idiopathic NPH: Tight high-convexity sulci with expanded basal Sylvian fissures.</p>
+              <div class="checkbox-list mt-2">
+                <label><input type="checkbox" id="f-desh-tight-vertex"> Tight high-convexity / parasagittal sulci</label>
+                <label><input type="checkbox" id="f-desh-sylvian-dilation"> Enlarged / ballooned Sylvian fissures</label>
+                <label><input type="checkbox" id="f-desh-focal-sulcal-dilation"> Focal sulcal dilation over convexities</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- LOVA Specific Neuroimaging Hallmarks -->
+          <div class="card grid-span-6 card-highlight-lova">
+            <h3 class="card-title">LOVA Specific Neuroimaging Hallmarks</h3>
+            <p class="card-subtitle">Pathognomonic imaging findings confirming Long-Standing Overt Ventriculomegaly.</p>
+            
+            <div class="checkbox-list mt-2">
+              <label><input type="checkbox" id="f-lova-aqueduct-stenosis"> <strong>Aqueductal Stenosis / Web / Occlusion</strong> (Narrowed or obstructed sylvian aqueduct)</label>
+              <label><input type="checkbox" id="f-lova-prepontine-membranes"> <strong>Thickened / Disruptive Prepontine Arachnoid Membranes</strong> (Membrane of Liliequist / retroclival arachnoid web)</label>
+              <label><input type="checkbox" id="f-lova-third-ventricle-bowing"> <strong>Downward Bowing of 3rd Ventricle Floor</strong> into the interpeduncular cistern</label>
+              <label><input type="checkbox" id="f-lova-sella-expansion"> <strong>Sella Turcica Expansion / Remodeling / Empty Sella</strong> (Chronic pulsatile remodel)</label>
+              <label><input type="checkbox" id="f-lova-calvarial-thinning"> <strong>Calvarial Thinning / Endocranial Scalloping</strong> (Long-standing childhood ICP effect)</label>
+              <label><input type="checkbox" id="f-lova-flow-void"> <strong>Hyperdynamic Aqueductal CSF Flow Void</strong> (Phase-contrast MRI / T2 jet)</label>
+            </div>
+
+            <div class="form-group mt-3">
+              <label for="f-imaging-modality">Primary Scan Modality</label>
+              <select id="f-imaging-modality" class="form-control">
+                <option value="3T MRI Brain (with 3D CISS/FIESTA)">3T MRI Brain (with 3D CISS/FIESTA)</option>
+                <option value="1.5T MRI Brain">1.5T MRI Brain</option>
+                <option value="CT Brain">CT Brain</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Interactive iNPH Radscale (0 - 12) -->
+          <div class="card grid-span-12 card-highlight-csf">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">iNPH Radscale (Radiological Scale for NPH, 0 - 12)</h3>
+                <p class="card-subtitle">Validated 7-parameter radiological scoring system evaluating likelihood of shunt response.</p>
+              </div>
+              <div class="score-display-box">
+                <span class="score-label">RADSCALE SCORE</span>
+                <span class="score-number" id="calc-radscale-total">0 / 12</span>
+              </div>
+            </div>
+
+            <div class="form-grid grid-cols-4 mt-3">
+              <div class="form-group">
+                <label for="rad-evans">1. Evans' Index</label>
+                <select id="rad-evans" class="form-control rad-input">
+                  <option value="0">&lt; 0.3 (0)</option>
+                  <option value="1">&ge; 0.3 (1)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rad-temporal">2. Temporal Horns</label>
+                <select id="rad-temporal" class="form-control rad-input">
+                  <option value="0">Normal width (0)</option>
+                  <option value="1">Mild dilation (1)</option>
+                  <option value="2">Severe dilation &ge; 4mm (2)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rad-callosal">3. Callosal Angle</label>
+                <select id="rad-callosal" class="form-control rad-input">
+                  <option value="0">&gt; 90&deg; (0)</option>
+                  <option value="1">60&deg; - 90&deg; (1)</option>
+                  <option value="2">&lt; 60&deg; (2)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rad-periventricular">4. Periventricular Changes</label>
+                <select id="rad-periventricular" class="form-control rad-input">
+                  <option value="0">None / minimal (0)</option>
+                  <option value="1">Halo / caps (1)</option>
+                  <option value="2">Confluent periventricular signal (2)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rad-high-convexity">5. High-Convexity Sulci</label>
+                <select id="rad-high-convexity" class="form-control rad-input">
+                  <option value="0">Normal sulci (0)</option>
+                  <option value="1">Narrowed / compressed sulci (1)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rad-sylvian">6. Sylvian Fissures</label>
+                <select id="rad-sylvian" class="form-control rad-input">
+                  <option value="0">Normal (0)</option>
+                  <option value="1">Enlarged / ballooned (1)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rad-focal-sulci">7. Focal Convexity Dilation</label>
+                <select id="rad-focal-sulci" class="form-control rad-input">
+                  <option value="0">Absent (0)</option>
+                  <option value="1">Present (1)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Radscale Predictive Interpretation</label>
+                <div class="score-interp-text" id="calc-radscale-interp">Score &ge; 8 strongly predictive of positive surgical response.</div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- TAB 6: CSF DYNAMIC STUDIES -->
+      <section class="tab-panel" id="tab-csf">
+        <div class="panel-header">
+          <h2>CSF Dynamic Studies & Supplemental Predictive Tests</h2>
+          <p class="panel-description">Diagnostic lumbar tap test (pre/post-timed walking & MoCA), continuous lumbar drainage, infusion test (Rout, PVI), and bolus protocols.</p>
+        </div>
+
+        <form id="form-csf" class="grid-form">
+          <!-- Lumbar Tap Test Protocol -->
+          <div class="card grid-span-12 card-highlight-csf">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">1. Diagnostic Lumbar Tap Test (Pre- vs Post-Tap Protocol)</h3>
+                <p class="card-subtitle">Timed 10-meter walk test and cognitive scoring measured 2 to 24 hours following 30-50 ml CSF drainage.</p>
+              </div>
+              <div class="score-display-box">
+                <span class="score-label">TAP TEST RESULT</span>
+                <span class="score-number text-csf" id="calc-tap-responder-badge">Pending</span>
+              </div>
+            </div>
+
+            <div class="form-grid grid-cols-4 mt-3">
+              <div class="form-group">
+                <label for="f-tap-date">Date of Tap Test</label>
+                <input type="date" id="f-tap-date" class="form-control" />
+              </div>
+              <div class="form-group">
+                <label for="f-tap-volume">CSF Volume Drained (ml)*</label>
+                <input type="number" id="f-tap-volume" class="form-control font-mono" placeholder="40" />
+              </div>
+              <div class="form-group">
+                <label for="f-tap-opening-pressure">Opening Pressure (cmH2O / mmHg)</label>
+                <input type="text" id="f-tap-opening-pressure" class="form-control" placeholder="14 cmH2O (10 mmHg)" />
+              </div>
+              <div class="form-group">
+                <label for="f-tap-closing-pressure">Closing Pressure (cmH2O)</label>
+                <input type="text" id="f-tap-closing-pressure" class="form-control" placeholder="4 cmH2O" />
+              </div>
+
+              <!-- Pre vs Post Gait Walk -->
+              <div class="form-group">
+                <label for="f-tap-pre-walk-time">Pre-Tap 10m Walk Time (sec)*</label>
+                <input type="number" step="0.1" id="f-tap-pre-walk-time" class="form-control tap-calc-input font-mono" placeholder="18.5" />
+              </div>
+              <div class="form-group">
+                <label for="f-tap-pre-walk-steps">Pre-Tap 10m Walk Steps*</label>
+                <input type="number" id="f-tap-pre-walk-steps" class="form-control tap-calc-input font-mono" placeholder="28" />
+              </div>
+              <div class="form-group">
+                <label for="f-tap-post-walk-time">Post-Tap 10m Walk Time (sec)*</label>
+                <input type="number" step="0.1" id="f-tap-post-walk-time" class="form-control tap-calc-input font-mono" placeholder="13.2" />
+              </div>
+              <div class="form-group">
+                <label for="f-tap-post-walk-steps">Post-Tap 10m Walk Steps*</label>
+                <input type="number" id="f-tap-post-walk-steps" class="form-control tap-calc-input font-mono" placeholder="21" />
+              </div>
+
+              <!-- Automated Improvements Calculation -->
+              <div class="card grid-span-4 bg-glass p-2">
+                <div class="form-grid grid-cols-3">
+                  <div>
+                    <span class="text-xs text-secondary">Walk Time Improvement:</span>
+                    <strong class="font-mono text-csf block text-base" id="calc-tap-time-improve">--%</strong>
+                    <span class="text-xs text-muted">(&gt;20% is strongly positive)</span>
+                  </div>
+                  <div>
+                    <span class="text-xs text-secondary">Step Count Improvement:</span>
+                    <strong class="font-mono text-csf block text-base" id="calc-tap-steps-improve">--%</strong>
+                    <span class="text-xs text-muted">(&gt;10% is clinically meaningful)</span>
+                  </div>
+                  <div>
+                    <span class="text-xs text-secondary">Overall Tap Test Classification:</span>
+                    <strong class="block text-base" id="calc-tap-summary">Awaiting Measurements</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cognition pre/post -->
+              <div class="form-group">
+                <label for="f-tap-pre-moca">Pre-Tap MoCA (/30)</label>
+                <input type="number" id="f-tap-pre-moca" class="form-control" placeholder="20" />
+              </div>
+              <div class="form-group">
+                <label for="f-tap-post-moca">Post-Tap MoCA (/30)</label>
+                <input type="number" id="f-tap-post-moca" class="form-control" placeholder="24" />
+              </div>
+              <div class="form-group grid-span-2">
+                <label for="f-tap-cognitive-notes">Qualitative Post-Tap Remarks</label>
+                <input type="text" id="f-tap-cognitive-notes" class="form-control" placeholder="Patient felt lighter on feet, spouse noted improved conversational engagement..." />
+              </div>
+            </div>
+          </div>
+
+          <!-- Lumbar Infusion Study -->
+          <div class="card grid-span-6">
+            <h3 class="card-title">2. Lumbar Infusion Study (Marmarou / Katzman)</h3>
+            <p class="card-subtitle">Constant rate infusion measuring CSF outflow resistance (Rout).</p>
+            <div class="form-grid grid-cols-2 mt-3">
+              <div class="form-group">
+                <label for="f-inf-rout">Rout (mmHg/ml/min)*</label>
+                <input type="number" step="0.1" id="f-inf-rout" class="form-control font-mono" placeholder="18.2" />
+                <span class="help-text">Rout &gt; 12-18 mmHg/ml/min indicates pathological outflow resistance.</span>
+              </div>
+              <div class="form-group">
+                <label for="f-inf-p0">Baseline Pressure P0 (mmHg)</label>
+                <input type="number" step="0.1" id="f-inf-p0" class="form-control font-mono" placeholder="9.5" />
+              </div>
+              <div class="form-group">
+                <label for="f-inf-plateau">Plateau Pressure (mmHg)</label>
+                <input type="number" step="0.1" id="f-inf-plateau" class="form-control" placeholder="32.0" />
+              </div>
+              <div class="form-group">
+                <label for="f-inf-pvi">Pressure-Volume Index PVI (ml)</label>
+                <input type="number" step="0.1" id="f-inf-pvi" class="form-control" placeholder="18.0" />
+              </div>
+              <div class="form-group grid-span-2">
+                <label class="checkbox-row">
+                  <input type="checkbox" id="f-inf-b-waves">
+                  <span><strong>Presence of Lundberg B-Waves (&gt;50% of recording duration)</strong></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Extended Lumbar Drain (ELD) & Bolus -->
+          <div class="card grid-span-6">
+            <h3 class="card-title">3. Continuous Lumbar Drainage (ELD) & Bolus</h3>
+            <p class="card-subtitle">External lumbar catheter continuous drainage over 48-72 hours.</p>
+            <div class="form-grid grid-cols-2 mt-3">
+              <div class="form-group">
+                <label for="f-eld-duration">ELD Drainage Duration (hours)</label>
+                <input type="number" id="f-eld-duration" class="form-control" placeholder="72" />
+              </div>
+              <div class="form-group">
+                <label for="f-eld-hourly-rate">Drainage Rate (ml/hour)</label>
+                <input type="number" id="f-eld-hourly-rate" class="form-control" placeholder="10" />
+              </div>
+              <div class="form-group">
+                <label for="f-eld-total-volume">Total CSF Drained (ml)</label>
+                <input type="number" id="f-eld-total-volume" class="form-control" placeholder="650" />
+              </div>
+              <div class="form-group">
+                <label for="f-eld-clinical-response">Overall ELD Response</label>
+                <select id="f-eld-clinical-response" class="form-control">
+                  <option value="Not Performed">Not Performed</option>
+                  <option value="Marked Positive Response">Marked Positive Response</option>
+                  <option value="Moderate Positive Response">Moderate Positive Response</option>
+                  <option value="Equivocal / No Improvement">Equivocal / No Improvement</option>
+                  <option value="Complicated / Aborted">Complicated / Aborted</option>
+                </select>
+              </div>
+              <div class="form-group grid-span-2">
+                <label for="f-csf-lab-results">CSF Laboratory Analysis (Protein, Glucose, Cells)</label>
+                <input type="text" id="f-csf-lab-results" class="form-control" placeholder="Protein 0.38 g/L, Glucose 3.8 mmol/L, WCC 0, no malignant cells" />
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- TAB 7: SURGERY & SHUNT HARDWARE -->
+      <section class="tab-panel" id="tab-treatment">
+        <div class="panel-header">
+          <h2>Surgical Treatment & Shunt Hardware Specifications</h2>
+          <p class="panel-description">Detailed documentation of diversionary procedures (VP, LP, VA, Ventriculopleural, ETV, disruption of prepontine membranes), valve hardware, initial differential and initial anti-gravity settings.</p>
+        </div>
+
+        <form id="form-treatment" class="grid-form">
+          <!-- Surgical Procedure Classification -->
+          <div class="card grid-span-6">
+            <h3 class="card-title">Surgical Procedure & Approach</h3>
+            <div class="form-grid grid-cols-2 mt-3">
+              <div class="form-group grid-span-2">
+                <label for="f-surg-procedure-type">Primary Surgical Procedure*</label>
+                <select id="f-surg-procedure-type" class="form-control font-semibold" required>
+                  <option value="Ventriculoperitoneal (VP) Shunt">Ventriculoperitoneal (VP) Shunt</option>
+                  <option value="Lumboperitoneal (LP) Shunt">Lumboperitoneal (LP) Shunt</option>
+                  <option value="Ventriculoatrial (VA) Shunt">Ventriculoatrial (VA) Shunt</option>
+                  <option value="Ventriculopleural Shunt">Ventriculopleural Shunt</option>
+                  <option value="Endoscopic Third Ventriculostomy (ETV)">Endoscopic Third Ventriculostomy (ETV)</option>
+                  <option value="ETV + Disruption of Prepontine Arachnoid Membranes">ETV + Disruption of Prepontine Arachnoid Membranes (Membrane of Liliequist)</option>
+                  <option value="Combined ETV and Shunt">Combined ETV and Shunt</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="f-surg-date">Date of Surgery*</label>
+                <input type="date" id="f-surg-date" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="f-surg-operating-surgeon">Lead Operating Surgeon</label>
+                <input type="text" id="f-surg-operating-surgeon" class="form-control" placeholder="Surgeon name" />
+              </div>
+
+              <div class="form-group">
+                <label for="f-surg-cranial-entry">Cranial Entry Site / Burr Hole</label>
+                <select id="f-surg-cranial-entry" class="form-control">
+                  <option value="Right Frontal (Kocher's Point)">Right Frontal (Kocher's Point)</option>
+                  <option value="Left Frontal (Kocher's Point)">Left Frontal (Kocher's Point)</option>
+                  <option value="Right Parieto-occipital (Keen's Point)">Right Parieto-occipital (Keen's Point)</option>
+                  <option value="Right Occipital (Frazier's Point)">Right Occipital (Frazier's Point)</option>
+                  <option value="Lumbar Spine (L3-4 / L4-5)">Lumbar Spine (L3-4 / L4-5)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="f-surg-navigation">Image Guidance / Navigation</label>
+                <select id="f-surg-navigation" class="form-control">
+                  <option value="Electromagnetic Frameless (Stealth / Kick)">Electromagnetic Frameless (Stealth / Kick)</option>
+                  <option value="Optical Frameless Neuronavigation">Optical Frameless Neuronavigation</option>
+                  <option value="Ultrasound Guidance">Intraoperative Ultrasound Guidance</option>
+                  <option value="Anatomical Landmarks">Anatomical Landmarks</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label class="checkbox-row">
+                  <input type="checkbox" id="f-surg-liliequist-disrupted">
+                  <span><strong>Disruption of Prepontine Arachnoid Membranes (Membrane of Liliequist / Retroclival Webs) Performed</strong></span>
+                </label>
+                <span class="help-text">Crucial in LOVA to establish basilar cistern CSF communication during ETV.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shunt Hardware & Initial Settings -->
+          <div class="card grid-span-6 card-highlight-csf">
+            <h3 class="card-title">Shunt Hardware & Initial Valve Settings</h3>
+            <p class="card-subtitle">Specific programmable differential unit and gravitational / anti-siphon valve unit.</p>
+            <div class="form-grid grid-cols-2 mt-3">
+              <div class="form-group">
+                <label for="f-shunt-manufacturer">Valve Manufacturer*</label>
+                <select id="f-shunt-manufacturer" class="form-control">
+                  <option value="Miethke (Aesculap)">Miethke (Aesculap)</option>
+                  <option value="Codman (Integra)">Codman (Integra)</option>
+                  <option value="Medtronic">Medtronic</option>
+                  <option value="Sophysa">Sophysa</option>
+                  <option value="Integra (OSV II / DP)">Integra (OSV II / DP)</option>
+                  <option value="Spitz-Holter / Hakim">Spitz-Holter / Hakim</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="f-shunt-model">Valve Model Name*</label>
+                <input type="text" id="f-shunt-model" class="form-control font-semibold" placeholder="e.g. proGAV 2.0 with proSA" />
+              </div>
+
+              <!-- Initial differential pressure -->
+              <div class="form-group">
+                <label for="f-shunt-initial-dp">Initial Differential Pressure Setting*</label>
+                <input type="text" id="f-shunt-initial-dp" class="form-control font-mono" placeholder="e.g. 10 cmH2O or Setting 4" />
+                <span class="help-text">Opening pressure threshold in supine position.</span>
+              </div>
+
+              <!-- Initial anti-gravity setting -->
+              <div class="form-group">
+                <label for="f-shunt-initial-ag">Initial Anti-Gravity Valve Setting*</label>
+                <input type="text" id="f-shunt-initial-ag" class="form-control font-mono" placeholder="e.g. 20 cmH2O or 25 cmH2O" />
+                <span class="help-text">Gravitational protection in standing position.</span>
+              </div>
+
+              <div class="form-group">
+                <label for="f-shunt-catheter-type">Catheter Type / Antimicrobial</label>
+                <select id="f-shunt-catheter-type" class="form-control">
+                  <option value="Bactiseal (Rifampicin/Clindamycin)">Bactiseal (Rifampicin/Clindamycin)</option>
+                  <option value="Silverline (Silver impregnated)">Silverline (Silver impregnated)</option>
+                  <option value="Standard Barium Impregnated Silicone">Standard Barium Impregnated Silicone</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="f-shunt-reservoir">Pumping Reservoir Chamber</label>
+                <select id="f-shunt-reservoir" class="form-control">
+                  <option value="Integrated Pre-chamber">Integrated Pre-chamber</option>
+                  <option value="Rickham Reservoir">Rickham Reservoir</option>
+                  <option value="Separate Flushing Reservoir">Separate Flushing Reservoir</option>
+                  <option value="None">None</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="f-shunt-serial-number">Valve Serial Number / Implant Tag</label>
+                <input type="text" id="f-shunt-serial-number" class="form-control font-mono" placeholder="e.g. SN-84920481-AG20" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Surgical Narrative -->
+          <div class="card grid-span-12">
+            <h3 class="card-title">Operative Findings & Immediate Post-Op Course</h3>
+            <div class="form-grid grid-cols-2">
+              <div class="form-group">
+                <label for="f-surg-operative-notes">Operative Findings & CSF Appearance</label>
+                <textarea id="f-surg-operative-notes" class="form-control" rows="3" placeholder="CSF under clear positive pressure, brain pulsating briskly, smooth passage into frontal horn at 5.5cm, satisfactory peritoneal distal flow..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="f-surg-postop-course">Post-Operative Recovery (Days 1 - 3)</label>
+                <textarea id="f-surg-postop-course" class="form-control" rows="3" placeholder="Discharged day 2, wound clean and dry, early subjective improvement in walking speed noted by ward physiotherapist..."></textarea>
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- TAB 8: SHUNT ADJUSTMENTS LOG -->
+      <section class="tab-panel" id="tab-adjustments">
+        <div class="panel-header-flex">
+          <div>
+            <h2>Serial Shunt Adjustments Log</h2>
+            <p class="panel-description">Chronological ledger of non-invasive valve adjustments, recording changes to differential and anti-gravity units, indications (overdrainage vs underdrainage), and clinical responses.</p>
+          </div>
+          <button id="btn-open-adjustment-modal" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Record Valve Adjustment
+          </button>
+        </div>
+
+        <div class="card mt-3">
+          <div class="table-responsive">
+            <table class="data-table" id="table-adjustments">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Clinical Reason / Indication</th>
+                  <th>Old DP</th>
+                  <th>New DP</th>
+                  <th>Old Anti-Gravity</th>
+                  <th>New Anti-Gravity</th>
+                  <th>Operator</th>
+                  <th>Clinical Response</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-adjustments">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 9: POST-SURGERY OUTCOMES & SCALES -->
+      <section class="tab-panel" id="tab-outcomes">
+        <div class="panel-header-flex">
+          <div>
+            <h2>Post-Surgery Reviews & Clinical Scales Comparison</h2>
+            <p class="panel-description">Evaluation of Adams-Hakim triad improvements (cognition, walking, continence), iNPHGS (0-12), Kiefer Scale (0-20), and patient/family satisfaction.</p>
+          </div>
+          <button id="btn-open-review-modal" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Clinic Review
+          </button>
+        </div>
+
+        <!-- Serial Reviews History Table -->
+        <div class="card mt-3">
+          <h3 class="card-title">Serial Follow-Up Clinic Reviews</h3>
+          <div class="table-responsive mt-2">
+            <table class="data-table" id="table-reviews">
+              <thead>
+                <tr>
+                  <th>Review Date</th>
+                  <th>Interval</th>
+                  <th>Gait Change</th>
+                  <th>Cognitive Change</th>
+                  <th>Urinary Change</th>
+                  <th>iNPHGS (Post)</th>
+                  <th>Kiefer (Post)</th>
+                  <th>PGI-I (Patient)</th>
+                  <th>Caregiver Sat.</th>
+                  <th>mRS</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-reviews">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pre-Op vs Latest Post-Op Comparison Engine -->
+        <div class="form-grid grid-cols-2 mt-4">
+          <!-- iNPHGS Comparative Engine -->
+          <div class="card card-highlight-csf">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">iNPH Grading Scale (iNPHGS, 0 - 12)</h3>
+                <p class="card-subtitle">Lower score represents better functional status.</p>
+              </div>
+              <div class="badge badge-csf font-mono" id="inphgs-delta-badge">&Delta; Change: --</div>
+            </div>
+
+            <div class="scoring-comparison-grid mt-3">
+              <div class="scoring-col">
+                <h4 class="text-sm font-semibold text-center border-b pb-1">Pre-Operative</h4>
+                <div class="form-group mt-2">
+                  <label>Gait Domain (0-4)</label>
+                  <select id="f-inphgs-pre-gait" class="form-control inphgs-calc-input">
+                    <option value="0">0 - Normal</option>
+                    <option value="1">1 - Complaint but no objective dysbasia</option>
+                    <option value="2">2 - Dysbasia without cane</option>
+                    <option value="3">3 - Cane or walker required</option>
+                    <option value="4">4 - Wheelchair / bedridden</option>
+                  </select>
+                </div>
+                <div class="form-group mt-2">
+                  <label>Cognitive Domain (0-4)</label>
+                  <select id="f-inphgs-pre-cog" class="form-control inphgs-calc-input">
+                    <option value="0">0 - Normal</option>
+                    <option value="1">1 - Subjective complaints, no deficit</option>
+                    <option value="2">2 - Mild deficit, independent</option>
+                    <option value="3">3 - Moderate deficit, needs aid</option>
+                    <option value="4">4 - Severe dementia, fully dependent</option>
+                  </select>
+                </div>
+                <div class="form-group mt-2">
+                  <label>Urinary Domain (0-4)</label>
+                  <select id="f-inphgs-pre-urin" class="form-control inphgs-calc-input">
+                    <option value="0">0 - Normal</option>
+                    <option value="1">1 - Pollakisuria / urgency</option>
+                    <option value="2">2 - Occasional incontinence (&le;1-2x/wk)</option>
+                    <option value="3">3 - Frequent incontinence (&gt;1x/day)</option>
+                    <option value="4">4 - Total incontinence</option>
+                  </select>
+                </div>
+                <div class="total-score-box mt-3 text-center">
+                  Pre-Op Total: <strong id="score-inphgs-pre-total" class="font-mono text-lg">0 / 12</strong>
+                </div>
+              </div>
+
+              <div class="scoring-col">
+                <h4 class="text-sm font-semibold text-center border-b pb-1">Latest Post-Operative</h4>
+                <div class="form-group mt-2">
+                  <label>Gait Domain (0-4)</label>
+                  <select id="f-inphgs-post-gait" class="form-control inphgs-calc-input">
+                    <option value="0">0 - Normal</option>
+                    <option value="1">1 - Complaint but no objective dysbasia</option>
+                    <option value="2">2 - Dysbasia without cane</option>
+                    <option value="3">3 - Cane or walker required</option>
+                    <option value="4">4 - Wheelchair / bedridden</option>
+                  </select>
+                </div>
+                <div class="form-group mt-2">
+                  <label>Cognitive Domain (0-4)</label>
+                  <select id="f-inphgs-post-cog" class="form-control inphgs-calc-input">
+                    <option value="0">0 - Normal</option>
+                    <option value="1">1 - Subjective complaints, no deficit</option>
+                    <option value="2">2 - Mild deficit, independent</option>
+                    <option value="3">3 - Moderate deficit, needs aid</option>
+                    <option value="4">4 - Severe dementia, fully dependent</option>
+                  </select>
+                </div>
+                <div class="form-group mt-2">
+                  <label>Urinary Domain (0-4)</label>
+                  <select id="f-inphgs-post-urin" class="form-control inphgs-calc-input">
+                    <option value="0">0 - Normal</option>
+                    <option value="1">1 - Pollakisuria / urgency</option>
+                    <option value="2">2 - Occasional incontinence (&le;1-2x/wk)</option>
+                    <option value="3">3 - Frequent incontinence (&gt;1x/day)</option>
+                    <option value="4">4 - Total incontinence</option>
+                  </select>
+                </div>
+                <div class="total-score-box mt-3 text-center">
+                  Post-Op Total: <strong id="score-inphgs-post-total" class="font-mono text-lg text-emerald">0 / 12</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kiefer NPH Scale (0 - 20) Comparative Engine -->
+          <div class="card card-highlight-lova">
+            <div class="card-header-flex">
+              <div>
+                <h3 class="card-title">Kiefer Clinical NPH Scale (0 - 20)</h3>
+                <p class="card-subtitle">Comprehensive scale: Gait (0-8), Cognition (0-6), Incontinence (0-4), Headache (0-2), Dizziness (0-2).</p>
+              </div>
+              <div class="badge badge-lova font-mono" id="kiefer-delta-badge">&Delta; Change: --</div>
+            </div>
+
+            <div class="form-grid grid-cols-2 mt-3">
+              <div class="p-2 border rounded">
+                <h4 class="text-xs font-semibold text-secondary uppercase">Pre-Operative Kiefer</h4>
+                <div class="form-group mt-1">
+                  <label>Gait (0-8)</label>
+                  <input type="number" id="f-kiefer-pre-gait" class="form-control kiefer-calc-input" min="0" max="8" value="4" />
+                </div>
+                <div class="form-group mt-1">
+                  <label>Cognition (0-6)</label>
+                  <input type="number" id="f-kiefer-pre-cog" class="form-control kiefer-calc-input" min="0" max="6" value="3" />
+                </div>
+                <div class="form-group mt-1">
+                  <label>Incontinence (0-4)</label>
+                  <input type="number" id="f-kiefer-pre-urin" class="form-control kiefer-calc-input" min="0" max="4" value="2" />
+                </div>
+                <div class="form-group mt-1">
+                  <label>Headache (0-2)</label>
+                  <input type="number" id="f-kiefer-pre-ha" class="form-control kiefer-calc-input" min="0" max="2" value="1" />
+                </div>
+                <div class="form-group mt-1">
+                  <label>Dizziness (0-2)</label>
+                  <input type="number" id="f-kiefer-pre-diz" class="form-control kiefer-calc-input" min="0" max="2" value="1" />
+                </div>
+                <div class="text-center font-bold mt-2">
+                  Pre Total: <span id="score-kiefer-pre-total" class="font-mono text-base">11 / 20</span>
+                </div>
+              </div>
+
+              <div class="p-2 border rounded">
+                <h4 class="text-xs font-semibold text-secondary uppercase">Post-Operative Kiefer</h4>
+                <div class="form-group mt-1">
+                  <label>Gait (0-8)</label>
+                  <input type="number" id="f-kiefer-post-gait" class="form-control kiefer-calc-input" min="0" max="8" value="1" />
+                </div>
+                <div class="form-group mt-1">
+                  <label>Cognition (0-6)</label>
+                  <input type="number" id="f-kiefer-post-cog" class="form-control kiefer-calc-input" min="0" max="6" value="1" />
+                </div>
+                <div class="form-group mt-1">
+                  <label>Incontinence (0-4)</label>
+                  <input type="number" id="f-kiefer-post-urin" class="form-control kiefer-calc-input" min="0" max="4" value="0" />
+                </div>
+                <div class="form-group mt-1">
+                  <label>Headache (0-2)</label>
+                  <input type="number" id="f-kiefer-post-ha" class="form-control kiefer-calc-input" min="0" max="2" value="0" />
+                </div>
+                <div class="form-group mt-1">
+                  <label>Dizziness (0-2)</label>
+                  <input type="number" id="f-kiefer-post-diz" class="form-control kiefer-calc-input" min="0" max="2" value="0" />
+                </div>
+                <div class="text-center font-bold mt-2 text-emerald">
+                  Post Total: <span id="score-kiefer-post-total" class="font-mono text-base text-emerald">2 / 20</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 10: COMPLICATIONS & REVISIONS -->
+      <section class="tab-panel" id="tab-complications">
+        <div class="panel-header-flex">
+          <div>
+            <h2>Surgical Complications & Shunt Revision Registry</h2>
+            <p class="panel-description">Complete tracking of acute/chronic surgical complications (subdural collections, infections), etiologies of shunt malfunction, and repeat surgical interventions.</p>
+          </div>
+          <button id="btn-open-complication-modal" class="btn btn-danger">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Record Complication / Revision
+          </button>
+        </div>
+
+        <div class="card mt-3">
+          <div class="table-responsive">
+            <table class="data-table" id="table-complications">
+              <thead>
+                <tr>
+                  <th>Onset Date</th>
+                  <th>Category</th>
+                  <th>Specific Event</th>
+                  <th>Etiology of Malfunction</th>
+                  <th>Intervention / Surgery</th>
+                  <th>Outcome</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-complications">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Common Complications Guidance Card -->
+        <div class="card grid-span-12 mt-4">
+          <h3 class="card-title">Comprehensive Complication & Malfunction Taxonomy</h3>
+          <div class="form-grid grid-cols-3 mt-2 text-xs text-secondary">
+            <div>
+              <strong class="text-main block">Overdrainage Phenomena:</strong>
+              Subdural hygroma, chronic subdural hematoma (CSDH), slit ventricle syndrome, low-pressure postural headache. Managed by raising differential or anti-gravity setting.
+            </div>
+            <div>
+              <strong class="text-main block">Hardware Malfunction Etiologies:</strong>
+              Proximal ventricular catheter occlusion (choroid plexus ingrowth), valve mechanism clogging with high-protein debris, distal peritoneal catheter pseudocyst, catheter migration or fracture.
+            </div>
+            <div>
+              <strong class="text-main block">Infection & Extracranial:</strong>
+              Staphylococcus epidermidis colonization, wound dehiscence over valve, abdominal visceral perforation, pleural effusion (in ventriculopleural shunts).
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 11: COHORT ANALYTICS -->
+      <section class="tab-panel" id="tab-cohort">
+        <div class="panel-header">
+          <h2>Registry Directory & Cohort Analytics Explorer</h2>
+          <p class="panel-description">Explore, filter, cross-tabulate, and export the entire patient cohort across diagnostic, imaging, surgical, and pharmacological axes.</p>
+        </div>
+
+        <div class="card">
+          <div class="cohort-toolbar">
+            <div class="cohort-filters">
+              <input type="text" id="cohort-filter-text" class="form-control" placeholder="Filter cohort by name, MRN, hardware..." style="max-width:300px;" />
+              <select id="cohort-filter-dx" class="form-control" style="max-width:200px;">
+                <option value="ALL">All Diagnoses</option>
+                <option value="iNPH">iNPH</option>
+                <option value="LOVA">LOVA</option>
+                <option value="sNPH">sNPH</option>
+              </select>
+              <select id="cohort-filter-metformin" class="form-control" style="max-width:200px;">
+                <option value="ALL">All Metformin Status</option>
+                <option value="Active">Active Metformin</option>
+                <option value="Never">Never Taken</option>
+              </select>
+            </div>
+            <div class="cohort-export-buttons">
+              <button id="btn-cohort-export-csv" class="btn btn-secondary">Export to CSV</button>
+              <button id="btn-cohort-export-json" class="btn btn-secondary">Export to JSON</button>
+            </div>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="data-table" id="table-cohort-directory">
+              <thead>
+                <tr>
+                  <th>MRN</th>
+                  <th>Patient Name</th>
+                  <th>Age / Sex</th>
+                  <th>Diagnosis</th>
+                  <th>OFC (cm)</th>
+                  <th>Evans'</th>
+                  <th>Surgery</th>
+                  <th>Valve Hardware</th>
+                  <th>Current Settings (DP / AG)</th>
+                  <th>Metformin</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-cohort">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Modal 1: Shunt Adjustment Modal -->
+    <div class="modal-backdrop" id="modal-adjustment" style="display:none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">Record Non-Invasive Shunt Adjustment</h3>
+          <button class="modal-close-btn" data-close-modal="modal-adjustment">&times;</button>
+        </div>
+        <form id="form-modal-adjustment">
+          <div class="modal-body">
+            <div class="form-grid grid-cols-2">
+              <div class="form-group">
+                <label for="m-adj-date">Adjustment Date*</label>
+                <input type="date" id="m-adj-date" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="m-adj-operator">Clinician / Operator*</label>
+                <input type="text" id="m-adj-operator" class="form-control" required placeholder="Neurosurgeon / Registrar" />
+              </div>
+              <div class="form-group grid-span-2">
+                <label for="m-adj-reason">Indication / Reason for Adjustment*</label>
+                <select id="m-adj-reason" class="form-control" required>
+                  <option value="Underdrainage (Inadequate symptom relief / gait persistence)">Underdrainage (Inadequate symptom relief / gait persistence)</option>
+                  <option value="Overdrainage (Postural headache / slit ventricles)">Overdrainage (Postural headache / slit ventricles)</option>
+                  <option value="Overdrainage (Subdural hygroma / effusion)">Overdrainage (Subdural hygroma / effusion)</option>
+                  <option value="Overdrainage (Chronic subdural hematoma)">Overdrainage (Chronic subdural hematoma)</option>
+                  <option value="Routine Protocol Stepwise Calibration">Routine Protocol Stepwise Calibration</option>
+                  <option value="Post-Traumatic / Post-MRI Verification & Reset">Post-Traumatic / Post-MRI Verification & Reset</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="m-adj-old-dp">Previous Differential Setting</label>
+                <input type="text" id="m-adj-old-dp" class="form-control font-mono" placeholder="e.g. 10 cmH2O" />
+              </div>
+              <div class="form-group">
+                <label for="m-adj-new-dp">New Differential Setting*</label>
+                <input type="text" id="m-adj-new-dp" class="form-control font-mono font-bold" required placeholder="e.g. 7 cmH2O" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-adj-old-ag">Previous Anti-Gravity Setting</label>
+                <input type="text" id="m-adj-old-ag" class="form-control font-mono" placeholder="e.g. 20 cmH2O" />
+              </div>
+              <div class="form-group">
+                <label for="m-adj-new-ag">New Anti-Gravity Setting*</label>
+                <input type="text" id="m-adj-new-ag" class="form-control font-mono font-bold" required placeholder="e.g. 25 cmH2O" />
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-adj-response">Clinical Response / Follow-up Plan</label>
+                <textarea id="m-adj-response" class="form-control" rows="2" placeholder="Record symptoms at time of change, verification X-ray / magnetic compass check, planned clinic review..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-modal="modal-adjustment">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Adjustment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 2: Clinic Review Modal -->
+    <div class="modal-backdrop" id="modal-review" style="display:none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">Record Clinic Review & Satisfaction</h3>
+          <button class="modal-close-btn" data-close-modal="modal-review">&times;</button>
+        </div>
+        <form id="form-modal-review">
+          <div class="modal-body">
+            <div class="form-grid grid-cols-2">
+              <div class="form-group">
+                <label for="m-rev-date">Review Date*</label>
+                <input type="date" id="m-rev-date" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="m-rev-interval">Follow-Up Interval*</label>
+                <select id="m-rev-interval" class="form-control" required>
+                  <option value="6 Weeks Post-Op">6 Weeks Post-Op</option>
+                  <option value="3 Months Post-Op">3 Months Post-Op</option>
+                  <option value="6 Months Post-Op">6 Months Post-Op</option>
+                  <option value="12 Months Post-Op">12 Months Post-Op</option>
+                  <option value="2 Years Post-Op">2 Years Post-Op</option>
+                  <option value="Long-term (>2y)">Long-term (&gt;2y)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="m-rev-gait-change">Gait Change*</label>
+                <select id="m-rev-gait-change" class="form-control" required>
+                  <option value="Markedly Improved">Markedly Improved</option>
+                  <option value="Moderately Improved">Moderately Improved</option>
+                  <option value="Slightly Improved">Slightly Improved</option>
+                  <option value="Unchanged">Unchanged</option>
+                  <option value="Deteriorated">Deteriorated</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="m-rev-walk-time">10m Walk Time (sec)</label>
+                <input type="number" step="0.1" id="m-rev-walk-time" class="form-control" placeholder="e.g. 11.8" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-rev-cog-change">Cognition Change</label>
+                <select id="m-rev-cog-change" class="form-control">
+                  <option value="Improved">Improved (more alert, faster processing)</option>
+                  <option value="Unchanged">Unchanged</option>
+                  <option value="Deteriorated">Deteriorated</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="m-rev-moca">Review MoCA (/30)</label>
+                <input type="number" id="m-rev-moca" class="form-control" placeholder="e.g. 26" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-rev-urin-change">Urinary Continence Change</label>
+                <select id="m-rev-urin-change" class="form-control">
+                  <option value="Resolved / Dry">Resolved / Dry</option>
+                  <option value="Improved Frequency/Urgency">Improved Frequency/Urgency</option>
+                  <option value="Unchanged">Unchanged</option>
+                  <option value="Worse">Worse</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="m-rev-mrs">Modified Rankin Scale (mRS, 0-6)</label>
+                <select id="m-rev-mrs" class="form-control">
+                  <option value="0">0 - No symptoms at all</option>
+                  <option value="1">1 - No significant disability</option>
+                  <option value="2">2 - Slight disability, independent</option>
+                  <option value="3">3 - Moderate disability, needs some help</option>
+                  <option value="4">4 - Moderately severe disability</option>
+                  <option value="5">5 - Severe disability, bedridden</option>
+                </select>
+              </div>
+
+              <!-- Satisfaction -->
+              <div class="form-group">
+                <label for="m-rev-pgi">Patient Impression of Improvement (PGI-I)*</label>
+                <select id="m-rev-pgi" class="form-control font-semibold" required>
+                  <option value="1 - Very Much Better">1 - Very Much Better</option>
+                  <option value="2 - Much Better">2 - Much Better</option>
+                  <option value="3 - A Little Better">3 - A Little Better</option>
+                  <option value="4 - No Change">4 - No Change</option>
+                  <option value="5 - A Little Worse">5 - A Little Worse</option>
+                  <option value="6 - Much Worse">6 - Much Worse</option>
+                  <option value="7 - Very Much Worse">7 - Very Much Worse</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="m-rev-caregiver-sat">Caregiver / Family Satisfaction (1-5)*</label>
+                <select id="m-rev-caregiver-sat" class="form-control font-semibold" required>
+                  <option value="5 - Extremely Satisfied">5 - Extremely Satisfied</option>
+                  <option value="4 - Satisfied">4 - Satisfied</option>
+                  <option value="3 - Neutral">3 - Neutral</option>
+                  <option value="2 - Dissatisfied">2 - Dissatisfied</option>
+                  <option value="1 - Very Dissatisfied">1 - Very Dissatisfied</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-rev-notes">Clinic Narrative & Management Plan</label>
+                <textarea id="m-rev-notes" class="form-control" rows="2" placeholder="Clinical notes, medication reviews, discussion with family..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-modal="modal-review">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Review</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 3: Complication & Revision Modal -->
+    <div class="modal-backdrop" id="modal-complication" style="display:none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">Record Surgical Complication or Shunt Revision</h3>
+          <button class="modal-close-btn" data-close-modal="modal-complication">&times;</button>
+        </div>
+        <form id="form-modal-complication">
+          <div class="modal-body">
+            <div class="form-grid grid-cols-2">
+              <div class="form-group">
+                <label for="m-comp-date">Onset / Diagnosis Date*</label>
+                <input type="date" id="m-comp-date" class="form-control" required />
+              </div>
+              <div class="form-group">
+                <label for="m-comp-category">Complication Category*</label>
+                <select id="m-comp-category" class="form-control" required>
+                  <option value="Overdrainage Collection (Hygroma / Hematoma)">Overdrainage Collection (Hygroma / Hematoma)</option>
+                  <option value="Mechanical Shunt Malfunction">Mechanical Shunt Malfunction</option>
+                  <option value="Shunt Infection / Colonization">Shunt Infection / Colonization</option>
+                  <option value="Wound Dehiscence / Skin Erosion">Wound Dehiscence / Skin Erosion</option>
+                  <option value="Abdominal / Distal Complication">Abdominal / Distal Complication (Pseudocyst/Perforation)</option>
+                  <option value="Epileptic Seizure">Epileptic Seizure</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-comp-specific-event">Specific Diagnosis / Event*</label>
+                <input type="text" id="m-comp-specific-event" class="form-control" required placeholder="e.g. Right subdural hygroma 12mm thickness with mass effect" />
+              </div>
+
+              <div class="form-group">
+                <label for="m-comp-malfunction-reason">Specific Reason for Shunt Malfunction</label>
+                <select id="m-comp-malfunction-reason" class="form-control">
+                  <option value="None / Not a Malfunction">None / Not a Malfunction</option>
+                  <option value="Proximal Catheter Obstruction (Choroid Plexus)">Proximal Catheter Obstruction (Choroid Plexus)</option>
+                  <option value="Valve Mechanism Obstruction / Debris">Valve Mechanism Obstruction / Debris</option>
+                  <option value="Distal Catheter Kinking / Migration / Block">Distal Catheter Kinking / Migration / Block</option>
+                  <option value="Disconnection / Tubing Fracture">Disconnection / Tubing Fracture</option>
+                  <option value="Peritoneal Pseudocyst">Peritoneal Pseudocyst</option>
+                  <option value="Anti-Gravity Valve Sticking">Anti-Gravity Valve Sticking</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="m-comp-surgery-required">Repeat Surgery / Revision Required?*</label>
+                <select id="m-comp-surgery-required" class="form-control font-semibold" required>
+                  <option value="Yes - Proximal Revision">Yes - Proximal Revision</option>
+                  <option value="Yes - Valve Replacement">Yes - Valve Replacement</option>
+                  <option value="Yes - Distal Revision / Relocation">Yes - Distal Revision / Relocation</option>
+                  <option value="Yes - Complete Shunt Replacement">Yes - Complete Shunt Replacement</option>
+                  <option value="Yes - Shunt Removal & ETV">Yes - Shunt Removal & ETV</option>
+                  <option value="Yes - Burr Hole Drainage of Subdural">Yes - Burr Hole Drainage of Subdural</option>
+                  <option value="No - Managed Conservatively / Valve Reprogrammed">No - Managed Conservatively / Reprogrammed</option>
+                  <option value="No - Medical Antibiotic Therapy">No - Medical Antibiotic Therapy</option>
+                </select>
+              </div>
+
+              <div class="form-group grid-span-2">
+                <label for="m-comp-outcome">Outcome & Current Status</label>
+                <textarea id="m-comp-outcome" class="form-control" rows="2" placeholder="Resolution of collection after valve pressure increase, successful revision of proximal catheter..."></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-close-modal="modal-complication">Cancel</button>
+            <button type="submit" class="btn btn-danger">Save Complication Record</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 4: About, Attribution & Research Disclaimer -->
+    <div class="modal-backdrop" id="modal-about" style="display:none;">
+      <div class="modal-dialog modal-dialog-lg">
+        <div class="modal-header">
+          <h3 class="modal-title">About NPH & LOVA Registry & Clinical Biostatistics</h3>
+          <button class="modal-close-btn" data-close-modal="modal-about">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="attribution-card">
+            <h4>Conceived & Designed For:</h4>
+            <p><strong>Clinical Biostatistics, Neurosurgery & Hydrocephalus Research</strong></p>
+            <p>by <strong>Dr G Narenthiran MB ChB BSc(MedSci)(Hons) MRCS(Ed.) FEBNS FRCS(SN)</strong></p>
+            <p class="text-xs text-muted mt-1">Dedicated with gratitude to <strong>Mrs Nirmaladevy Ganesalingam BSc</strong>.</p>
+          </div>
+
+          <div class="disclaimer-alert mt-4">
+            <h5 class="text-sm font-bold text-amber">RESEARCH & EDUCATIONAL DISCLAIMER</h5>
+            <p class="text-xs mt-1">
+              The calculations, scoring algorithms, and database systems implemented in this software are primarily designed for prospective studies, clinical data exploration, scientific registries, and educational teaching.
+            </p>
+            <p class="text-xs font-bold text-amber mt-2">
+              *** Please do not use the software as a substitute for independent multidisciplinary clinical judgement or solely for patient decision making ***
+            </p>
+          </div>
+
+          <div class="system-specs mt-4 text-xs text-secondary">
+            <h5 class="font-semibold text-main mb-1">Architecture & Cross-Platform Specifications:</h5>
+            <ul style="padding-left:18px; line-height:1.6;">
+              <li><strong>Frontend:</strong> Modern Web UI (Inter & JetBrains Mono typography, CSS3 Design Tokens, Accessible Reactive Forms)</li>
+              <li><strong>Desktop Shell:</strong> Tauri v2 (Rust 1.98+, Native Universal macOS App & Windows MSI/NSIS)</li>
+              <li><strong>Database Engine:</strong> Embedded SQLite with full transactional integrity, foreign keys, and multi-index schema</li>
+              <li><strong>Dual Mode:</strong> Seamless execution in native desktop container or standalone modern web browser</li>
+              <li><strong>Standards Grounding:</strong> Relkin et al. (iNPH Guidelines), Oi et al. (LOVA Diagnostic Criteria), Klinge et al. (DESH & Tap Test), Kiefer Scale, iNPHGS, and iNPH Radscale.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-close-modal="modal-about">Acknowledge & Close</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/schema.js"></script>
+  <script src="js/scoring-engines.js"></script>
+  <script src="js/db-adapter.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
