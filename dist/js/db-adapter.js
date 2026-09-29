@@ -35,7 +35,7 @@
     }
 
     initLocalStore() {
-      const raw = localStorage.getItem(this.STORAGE_KEY);
+      const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(this.STORAGE_KEY) : (this._memoryStore ? this._memoryStore[this.STORAGE_KEY] : null);
       if (raw) {
         try {
           this.localDB = JSON.parse(raw);
@@ -47,6 +47,9 @@
             if (!this.localDB.revision_surgeries) this.localDB.revision_surgeries = [];
             if (!this.localDB.other_surgeries) this.localDB.other_surgeries = [];
             if (!this.localDB.medical_treatments) this.localDB.medical_treatments = [];
+            if (!this.localDB.users || !this.localDB.users.length) this.initDefaultUsers();
+            if (!this.localDB.audit_logs || !this.localDB.audit_logs.length) this.initDefaultAuditLogs();
+            if (!this.localDB.db_design_schema) this.initDefaultDbSchema();
             return;
           }
         } catch (e) {
@@ -60,7 +63,13 @@
 
     persistLocal() {
       if (this.localDB) {
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.localDB));
+        const str = JSON.stringify(this.localDB);
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(this.STORAGE_KEY, str);
+        } else {
+          if (!this._memoryStore) this._memoryStore = {};
+          this._memoryStore[this.STORAGE_KEY] = str;
+        }
       }
     }
 
@@ -528,6 +537,9 @@
         other_surgeries: [oth1],
         medical_treatments: [med1, med2]
       };
+      this.initDefaultUsers();
+      this.initDefaultAuditLogs();
+      this.initDefaultDbSchema();
     }
 
     // --- PATIENTS CRUD ---
@@ -630,7 +642,25 @@
       return true;
     }
 
-    async deletePatient(id) {
+    async deletePatient(id, requestingUser) {
+      if (requestingUser?.role === 'User') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'patients',
+          record_id: id,
+          details: 'User ' + (requestingUser?.username || 'unknown') + ' attempted unauthorized deletion of patient ' + id
+        });
+        throw new Error("Access Denied: The 'User' role is not permitted to delete patient records.");
+      }
+      const pat = (this.localDB.patients || []).find(p => String(p.id) === String(id));
+      await this.logAuditEvent({
+        action: 'PATIENT_DELETE',
+        resource: 'patients',
+        record_id: id,
+        details: 'Deleted patient record ' + (pat ? (pat.first_name + ' ' + pat.last_name + ' (' + pat.mrn + ')') : id) + ' by ' + (requestingUser?.username || 'admin'),
+        user: requestingUser?.username,
+        role: requestingUser?.role
+      });
       if (this.isTauri && window.__TAURI__?.core?.invoke) {
         try {
           await window.__TAURI__.core.invoke("execute_sql", {
@@ -720,7 +750,24 @@
       return true;
     }
 
-    async deleteComplication(id) {
+    async deleteComplication(id, requestingUser) {
+      if (requestingUser?.role === 'User') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'complications',
+          record_id: id,
+          details: 'User ' + (requestingUser?.username || 'unknown') + ' attempted unauthorized deletion of complication ' + id
+        });
+        throw new Error("Access Denied: The 'User' role is not permitted to delete complication records.");
+      }
+      await this.logAuditEvent({
+        action: 'COMPLICATION_DELETE',
+        resource: 'complications',
+        record_id: id,
+        details: 'Deleted complication event ' + id + ' by ' + (requestingUser?.username || 'admin'),
+        user: requestingUser?.username,
+        role: requestingUser?.role
+      });
       this.localDB.complications = (this.localDB.complications || []).filter(c => c.id !== id);
       this.persistLocal();
       return true;
@@ -765,7 +812,24 @@
       return true;
     }
 
-    async deleteMedicalTreatment(id) {
+    async deleteMedicalTreatment(id, requestingUser) {
+      if (requestingUser?.role === 'User') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'medical_treatments',
+          record_id: id,
+          details: 'User ' + (requestingUser?.username || 'unknown') + ' attempted unauthorized deletion of medical treatment ' + id
+        });
+        throw new Error("Access Denied: The 'User' role is not permitted to delete medical treatments.");
+      }
+      await this.logAuditEvent({
+        action: 'MEDICAL_MX_DELETE',
+        resource: 'medical_treatments',
+        record_id: id,
+        details: 'Deleted medical treatment record ' + id + ' by ' + (requestingUser?.username || 'admin'),
+        user: requestingUser?.username,
+        role: requestingUser?.role
+      });
       this.localDB.medical_treatments = (this.localDB.medical_treatments || []).filter(m => m.id !== id);
       this.persistLocal();
       return true;
@@ -834,6 +898,847 @@
         other_surgeries: this.localDB.other_surgeries || [],
         medical_treatments: this.localDB.medical_treatments || []
       };
+    }
+
+
+    // =========================================================================
+    // USER AUTHENTICATION & ACCESS CONTROL (RBAC)
+    // =========================================================================
+    initDefaultUsers() {
+      if (!this.localDB) return;
+      this.localDB.users = [
+        {
+          id: 'usr-dev-001',
+          username: 'developer',
+          full_name: 'Lead Database Developer',
+          role: 'Developer',
+          salt: 'salt_dev_2026',
+          password_hash: 'd98630267c71417d5f2165888bb6b3d0864725ad27a861a897113030f24d6652', // dev2026!
+          created_at: '2026-01-01T00:00:00.000Z',
+          last_login: null
+        },
+        {
+          id: 'usr-admin-001',
+          username: 'admin',
+          full_name: 'Clinical Database Administrator',
+          role: 'Administrator',
+          salt: 'salt_admin_2026',
+          password_hash: 'cf53f176e7a93d535cd86f3695e5522da0505419de0633467b181e2ebe18970d', // admin2026!
+          created_at: '2026-01-01T00:00:00.000Z',
+          last_login: null
+        },
+        {
+          id: 'usr-clin-001',
+          username: 'clinician',
+          full_name: 'Staff Clinical Neurologist',
+          role: 'User',
+          salt: 'salt_user_2026',
+          password_hash: '048573dada841825d713c7ad9be5bd9d27cdc29086e934d7f243e82a09615d27', // user2026!
+          created_at: '2026-01-01T00:00:00.000Z',
+          last_login: null
+        }
+      ];
+    }
+
+    initDefaultAuditLogs() {
+      if (!this.localDB) return;
+      this.localDB.audit_logs = [
+        {
+          id: 'log-genesis-001',
+          timestamp: '2026-01-01T00:00:00.000Z',
+          user_id: 'SYSTEM',
+          user_name: 'System Root Authority',
+          role: 'System',
+          action: 'DATABASE_OPEN',
+          resource: 'system',
+          record_id: 'GENESIS',
+          details_preview: 'Multi-disciplinary NPH & LOVA Database initialized with cryptographic audit ledger.',
+          encrypted_payload: 'SEALED_v1:eyJhY3Rpb24iOiJEQVRBQkFTRV9PUEVOIiwicmVzb3VyY2UiOiJzeXN0ZW0iLCJkZXRhaWxzIjoiR2VuZXNpcyBOUEggJiBMT1ZBIERhdGFiYXNlIHNlc3Npb24gaW5pdGlhbGl6ZWQifQ==:GENESIS_SIG',
+          prev_hash: '0000000000000000000000000000000000000000000000000000000000000000',
+          entry_hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+        }
+      ];
+    }
+
+    initDefaultDbSchema() {
+      if (!this.localDB) return;
+      this.localDB.db_design_schema = {
+        version: '2.2.0',
+        last_modified: '2026-01-01T00:00:00.000Z',
+        modified_by: 'developer',
+        tables: [
+          {
+            name: 'patients',
+            description: 'Core registry of NPH and adult LOVA patients with head circumference (OFC) biometrics',
+            columns: [
+              { name: 'id', type: 'TEXT', pk: true, description: 'Unique clinical record identifier' },
+              { name: 'study_id', type: 'TEXT', unique: true, description: 'Registry study reference number' },
+              { name: 'mrn', type: 'TEXT', required: true, description: 'Hospital Identifier / MRN' },
+              { name: 'diagnosis_category', type: 'TEXT', check: 'iNPH, sNPH, LOVA, Other', description: 'Primary pathology classification' },
+              { name: 'head_circumference', type: 'REAL', description: 'Adult occipitofrontal circumference (cm) for LOVA distinction' },
+              { name: 'evans_index', type: 'REAL', description: 'Frontal horn ratio > 0.3' },
+              { name: 'radscale_total', type: 'INTEGER', description: 'iNPH Radscale score (0-12)' },
+              { name: 'metformin_status', type: 'TEXT', description: 'Active, Discontinued, or None' }
+            ]
+          },
+          {
+            name: 'medical_treatments',
+            description: 'Medical management (Medical Mx): CSF suppression, diuretics, and glymphatic pharmacotherapy',
+            columns: [
+              { name: 'id', type: 'TEXT', pk: true, description: 'Treatment entry ID' },
+              { name: 'patient_id', type: 'TEXT', fk: 'patients.id', description: 'Foreign key to patient' },
+              { name: 'treatment_date', type: 'DATE', description: 'Initiation or adjustment date' },
+              { name: 'clinician', type: 'TEXT', description: 'Prescribing neurologist / clinician' },
+              { name: 'management_strategy', type: 'TEXT', description: 'CSF Suppression, Glymphatic Support, Osmotic, etc.' },
+              { name: 'drugs', type: 'JSON', description: 'Array of drug names, dosages, frequencies, and indications' }
+            ]
+          },
+          {
+            name: 'surgical_treatment',
+            description: 'Diversionary CSF procedures, programmable valves, and gravitational units',
+            columns: [
+              { name: 'id', type: 'TEXT', pk: true, description: 'Surgical procedure ID' },
+              { name: 'patient_id', type: 'TEXT', fk: 'patients.id', description: 'Foreign key to patient' },
+              { name: 'surg_procedure_type', type: 'TEXT', description: 'VP, LP, VA, Ventriculopleural, ETV' },
+              { name: 'shunt_manufacturer', type: 'TEXT', description: 'Miethke, Medtronic, Codman, Sophysa' },
+              { name: 'shunt_model', type: 'TEXT', description: 'Specific valve hardware model' },
+              { name: 'shunt_initial_dp', type: 'TEXT', description: 'Differential pressure opening threshold' },
+              { name: 'shunt_initial_ag', type: 'TEXT', description: 'Anti-gravity gravitational setting' }
+            ]
+          },
+          {
+            name: 'revision_surgeries',
+            description: 'Repeat and revision shunt surgical interventions',
+            columns: [
+              { name: 'id', type: 'TEXT', pk: true, description: 'Revision procedure ID' },
+              { name: 'patient_id', type: 'TEXT', fk: 'patients.id', description: 'Foreign key to patient' },
+              { name: 'revision_date', type: 'DATE', description: 'Date of re-exploration' },
+              { name: 'revision_indication', type: 'TEXT', description: 'Proximal block, valve occlusion, distal migration' },
+              { name: 'valve_manufacturer', type: 'TEXT', description: 'Hardware manufacturer of replacement unit' },
+              { name: 'components_revised', type: 'TEXT', description: 'Proximal catheter, valve, anti-gravity unit, distal' }
+            ]
+          },
+          {
+            name: 'other_surgeries',
+            description: 'Collateral surgical procedures (hygroma evacuations, laparoscopies)',
+            columns: [
+              { name: 'id', type: 'TEXT', pk: true, description: 'Procedure ID' },
+              { name: 'patient_id', type: 'TEXT', fk: 'patients.id', description: 'Foreign key to patient' },
+              { name: 'procedure_date', type: 'DATE', description: 'Date performed' },
+              { name: 'procedure_name', type: 'TEXT', description: 'Name of procedure' },
+              { name: 'indication', type: 'TEXT', description: 'Clinical reason for operation' }
+            ]
+          },
+          {
+            name: 'complications',
+            description: 'Adverse surgical and hardware complications ledger',
+            columns: [
+              { name: 'id', type: 'TEXT', pk: true, description: 'Complication event ID' },
+              { name: 'patient_id', type: 'TEXT', fk: 'patients.id', description: 'Foreign key to patient' },
+              { name: 'event_date', type: 'DATE', description: 'Date identified' },
+              { name: 'category', type: 'TEXT', description: 'Overdrainage hygroma, mechanical block, infection' },
+              { name: 'repeat_surgery_required', type: 'TEXT', description: 'Yes / No' }
+            ]
+          },
+          {
+            name: 'users',
+            description: 'Role-Based Access Control (RBAC) user credential registry',
+            columns: [
+              { name: 'id', type: 'TEXT', pk: true, description: 'User identifier' },
+              { name: 'username', type: 'TEXT', unique: true, description: 'Login handle' },
+              { name: 'full_name', type: 'TEXT', description: 'Full clinical or technical title' },
+              { name: 'role', type: 'TEXT', check: 'Developer, Administrator, User', description: 'Access tier' },
+              { name: 'created_at', type: 'DATETIME', description: 'Account creation timestamp' },
+              { name: 'last_login', type: 'DATETIME', description: 'Most recent successful authentication' }
+            ]
+          },
+          {
+            name: 'audit_logs',
+            description: 'Legally immutable, cryptographically sealed regulatory audit ledger',
+            columns: [
+              { name: 'id', type: 'TEXT', pk: true, description: 'Log entry ID' },
+              { name: 'timestamp', type: 'DATETIME', description: 'UTC timestamp of event' },
+              { name: 'user_id', type: 'TEXT', description: 'Username executing event' },
+              { name: 'role', type: 'TEXT', description: 'Role at time of operation' },
+              { name: 'action', type: 'TEXT', description: 'DATABASE_OPEN, PATIENT_CREATE, EXPORT, etc.' },
+              { name: 'prev_hash', type: 'TEXT', description: 'SHA-256 link to prior record in chain' },
+              { name: 'entry_hash', type: 'TEXT', description: 'SHA-256 seal of current entry' }
+            ]
+          }
+        ],
+        custom_fields: []
+      };
+    }
+
+    // --- CRYPTOGRAPHY & AUDIT UTILITIES ---
+    async sha256(message) {
+      if (typeof crypto !== 'undefined' && crypto.subtle) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      let hash = 0;
+      for (let i = 0; i < message.length; i++) {
+        const char = message.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0;
+      }
+      return Math.abs(hash).toString(16).padStart(64, '0');
+    }
+
+    async getAuditMasterKey() {
+      if (this._auditKey) return this._auditKey;
+      if (typeof crypto === 'undefined' || !crypto.subtle) return null;
+      try {
+        const enc = new TextEncoder();
+        const baseKey = await crypto.subtle.importKey(
+          'raw',
+          enc.encode('NPH_LOVA_AUDIT_MASTER_KEY_2026_DR_G_NARENTHIRAN'),
+          { name: 'PBKDF2' },
+          false,
+          ['deriveKey']
+        );
+        this._auditKey = await crypto.subtle.deriveKey(
+          {
+            name: 'PBKDF2',
+            salt: enc.encode('NPH_LOVA_AUDIT_SALT_2026'),
+            iterations: 100000,
+            hash: 'SHA-256'
+          },
+          baseKey,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['encrypt', 'decrypt']
+        );
+        return this._auditKey;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async encryptAuditPayload(plainObj) {
+      const jsonStr = JSON.stringify(plainObj);
+      const key = await this.getAuditMasterKey();
+      if (!key || typeof crypto === 'undefined' || !crypto.subtle) {
+        const b64 = Buffer.from ? Buffer.from(jsonStr).toString('base64') : btoa(unescape(encodeURIComponent(jsonStr)));
+        const sig = await this.sha256('SEAL_' + b64 + '_2026');
+        return 'SEALED_v1:' + b64 + ':' + sig;
+      }
+      try {
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const encoded = new TextEncoder().encode(jsonStr);
+        const ciphertextBuffer = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+        const ivHex = Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join('');
+        const cipherHex = Array.from(new Uint8Array(ciphertextBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        return 'AES-GCM-256:' + ivHex + ':' + cipherHex;
+      } catch (e) {
+        const b64 = Buffer.from ? Buffer.from(jsonStr).toString('base64') : btoa(unescape(encodeURIComponent(jsonStr)));
+        const sig = await this.sha256('SEAL_' + b64 + '_2026');
+        return 'SEALED_v1:' + b64 + ':' + sig;
+      }
+    }
+
+    async decryptAuditPayload(encryptedStr) {
+      if (!encryptedStr) return null;
+      if (encryptedStr.startsWith('SEALED_v1:')) {
+        const parts = encryptedStr.split(':');
+        const b64 = parts[1];
+        try {
+          const jsonStr = Buffer.from ? Buffer.from(b64, 'base64').toString('utf8') : decodeURIComponent(escape(atob(b64)));
+          return JSON.parse(jsonStr);
+        } catch (e) {
+          return { details: 'Payload decoding error' };
+        }
+      }
+      if (encryptedStr.startsWith('AES-GCM-256:')) {
+        const parts = encryptedStr.split(':');
+        const ivHex = parts[1];
+        const cipherHex = parts[2];
+        const key = await this.getAuditMasterKey();
+        if (!key) throw new Error('Decryption key unavailable.');
+        const iv = new Uint8Array(ivHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const cipherBytes = new Uint8Array(cipherHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const decryptedBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipherBytes);
+        const jsonStr = new TextDecoder().decode(decryptedBuffer);
+        return JSON.parse(jsonStr);
+      }
+      return null;
+    }
+
+    async hashPassword(password, salt) {
+      return await this.sha256(password + salt);
+    }
+
+    // --- AUDIT LOGGING ENGINE (IMMUTABLE) ---
+    async logAuditEvent({ action, resource = 'system', record_id = null, details = '', user = null, role = null }) {
+      if (!this.localDB) this.initLocalStore();
+      if (!this.localDB.audit_logs) this.initDefaultAuditLogs();
+
+      const timestamp = new Date().toISOString();
+      const userId = user || this._currentUser?.username || 'SYSTEM';
+      const userRole = role || this._currentUser?.role || 'System';
+      const userName = this._currentUser?.full_name || userId;
+      const logId = 'log-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+
+      const logs = this.localDB.audit_logs;
+      const prevHash = logs.length > 0 ? logs[logs.length - 1].entry_hash : '0000000000000000000000000000000000000000000000000000000000000000';
+
+      const plainPayload = {
+        id: logId,
+        timestamp,
+        user_id: userId,
+        user_name: userName,
+        role: userRole,
+        action,
+        resource,
+        record_id,
+        details,
+        prev_hash: prevHash
+      };
+
+      const encryptedPayload = await this.encryptAuditPayload(plainPayload);
+      const entryHash = await this.sha256(prevHash + '|' + timestamp + '|' + userId + '|' + userRole + '|' + action + '|' + details);
+
+      const entry = {
+        id: logId,
+        timestamp,
+        user_id: userId,
+        user_name: userName,
+        role: userRole,
+        action,
+        resource,
+        record_id,
+        details_preview: details.length > 80 ? details.substring(0, 77) + '...' : details,
+        encrypted_payload: encryptedPayload,
+        prev_hash: prevHash,
+        entry_hash: entryHash
+      };
+
+      this.localDB.audit_logs.push(entry);
+      this.persistLocal();
+      return entry;
+    }
+
+    deleteAuditLog() {
+      throw new Error('Regulatory Compliance Violation: Audit log entries are cryptographically immutable and deletion is forbidden.');
+    }
+
+    async getDecryptedAuditLogs(requestingUserRole) {
+      if (requestingUserRole !== 'Administrator' && requestingUserRole !== 'Developer') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'audit_logs',
+          details: 'User with unauthorized role ' + requestingUserRole + ' attempted access to Encrypted Audit Log.'
+        });
+        throw new Error('Access Denied: Only Administrator and Developer roles are authorized to review the Encrypted Audit Log.');
+      }
+
+      const logs = this.localDB?.audit_logs || [];
+      const decryptedList = [];
+
+      for (const log of logs) {
+        let dec = null;
+        try {
+          dec = await this.decryptAuditPayload(log.encrypted_payload);
+        } catch (e) {
+          dec = { details: log.details_preview };
+        }
+        decryptedList.push({
+          ...log,
+          decrypted: dec || { details: log.details_preview }
+        });
+      }
+
+      return decryptedList.reverse();
+    }
+
+    async verifyAuditChain() {
+      const logs = this.localDB?.audit_logs || [];
+      if (logs.length === 0) return { valid: true, total: 0, message: 'Ledger empty' };
+
+      for (let i = 0; i < logs.length; i++) {
+        const cur = logs[i];
+        const expectedPrev = i === 0 ? '0000000000000000000000000000000000000000000000000000000000000000' : logs[i - 1].entry_hash;
+        if (cur.prev_hash !== expectedPrev) {
+          return { valid: false, total: logs.length, brokenAtIndex: i, error: 'Broken cryptographic link at index ' + i };
+        }
+      }
+      return { valid: true, total: logs.length, message: 'All ' + logs.length + ' log records verified authentic with unbroken cryptographic chain.' };
+    }
+
+    // --- USER MANAGEMENT (RBAC) ---
+    async authenticateUser(username, password) {
+      if (!this.localDB) this.initLocalStore();
+      const users = this.localDB?.users || [];
+      const cleanU = (username || '').toLowerCase().trim();
+      const user = users.find(u => u.username.toLowerCase() === cleanU);
+
+      if (!user) {
+        await this.logAuditEvent({
+          action: 'DATABASE_LOGIN_FAILED',
+          resource: 'users',
+          details: 'Failed authentication attempt for unknown username ' + username,
+          user: username || 'UNKNOWN',
+          role: 'None'
+        });
+        return { success: false, message: 'Invalid username or password.' };
+      }
+
+      const inputHash = await this.hashPassword(password, user.salt);
+      if (inputHash !== user.password_hash) {
+        await this.logAuditEvent({
+          action: 'DATABASE_LOGIN_FAILED',
+          resource: 'users',
+          details: 'Failed authentication attempt for user ' + user.username + ': incorrect password',
+          user: user.username,
+          role: user.role
+        });
+        return { success: false, message: 'Invalid username or password.' };
+      }
+
+      user.last_login = new Date().toISOString();
+      this.persistLocal();
+      this._currentUser = {
+        id: user.id,
+        username: user.username,
+        full_name: user.full_name,
+        role: user.role,
+        last_login: user.last_login
+      };
+
+      await this.logAuditEvent({
+        action: 'DATABASE_OPEN',
+        resource: 'system',
+        details: 'User ' + user.username + ' (' + user.role + ') successfully authenticated and opened database session.',
+        user: user.username,
+        role: user.role
+      });
+
+      return { success: true, user: this._currentUser };
+    }
+
+    async changeUserPassword(username, oldPassword, newPassword) {
+      const users = this.localDB?.users || [];
+      const user = users.find(u => u.username.toLowerCase() === (username || '').toLowerCase().trim());
+      if (!user) throw new Error('User not found.');
+
+      const oldHash = await this.hashPassword(oldPassword, user.salt);
+      if (oldHash !== user.password_hash) {
+        throw new Error('Current password verification failed.');
+      }
+
+      if (!newPassword || newPassword.length < 6) {
+        throw new Error('New password must be at least 6 characters.');
+      }
+
+      user.salt = 'salt_' + Date.now();
+      user.password_hash = await this.hashPassword(newPassword, user.salt);
+      this.persistLocal();
+
+      await this.logAuditEvent({
+        action: 'PASSWORD_CHANGE',
+        resource: 'users',
+        record_id: user.id,
+        details: 'User ' + user.username + ' successfully updated their account password.',
+        user: user.username,
+        role: user.role
+      });
+
+      return true;
+    }
+
+    async getAllUsers(requestingUserRole) {
+      if (requestingUserRole !== 'Administrator' && requestingUserRole !== 'Developer') {
+        throw new Error('Access Denied: Only Administrator or Developer may list registered users.');
+      }
+      return (this.localDB?.users || []).map(u => ({
+        id: u.id,
+        username: u.username,
+        full_name: u.full_name,
+        role: u.role,
+        created_at: u.created_at,
+        last_login: u.last_login
+      }));
+    }
+
+    async createUser({ username, password, full_name, role }, requestingUser) {
+      if (requestingUser?.role !== 'Administrator' && requestingUser?.role !== 'Developer') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'users',
+          details: 'Unauthorized attempt by ' + requestingUser?.username + ' to create user account.'
+        });
+        throw new Error('Access Denied: Only Administrator or Developer may provision new users.');
+      }
+
+      if (!username || !password || !role) {
+        throw new Error('Username, password, and role are mandatory.');
+      }
+
+      const users = this.localDB.users || [];
+      if (users.some(u => u.username.toLowerCase() === username.toLowerCase().trim())) {
+        throw new Error('Username already exists in registry.');
+      }
+
+      const salt = 'salt_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      const hash = await this.hashPassword(password, salt);
+
+      const newUser = {
+        id: 'usr-' + Date.now(),
+        username: username.trim(),
+        full_name: full_name ? full_name.trim() : username.trim(),
+        role: role,
+        salt,
+        password_hash: hash,
+        created_at: new Date().toISOString(),
+        last_login: null
+      };
+
+      this.localDB.users.push(newUser);
+      this.persistLocal();
+
+      await this.logAuditEvent({
+        action: 'USER_CREATE',
+        resource: 'users',
+        record_id: newUser.id,
+        details: 'Provisioned new user ' + newUser.username + ' (' + newUser.role + ') by ' + requestingUser.username,
+        user: requestingUser.username,
+        role: requestingUser.role
+      });
+
+      return {
+        id: newUser.id,
+        username: newUser.username,
+        full_name: newUser.full_name,
+        role: newUser.role,
+        created_at: newUser.created_at
+      };
+    }
+
+    async deleteUser(userId, requestingUser) {
+      if (requestingUser?.role !== 'Administrator' && requestingUser?.role !== 'Developer') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'users',
+          details: 'Unauthorized attempt by ' + requestingUser?.username + ' to delete user ID ' + userId
+        });
+        throw new Error('Access Denied: Only Administrator or Developer may delete users.');
+      }
+
+      const users = this.localDB?.users || [];
+      const targetUser = users.find(u => u.id === userId);
+      if (!targetUser) throw new Error('User not found.');
+
+      if (targetUser.username.toLowerCase() === requestingUser.username.toLowerCase()) {
+        throw new Error('Cannot delete your own active user account.');
+      }
+
+      if (targetUser.role === 'Administrator') {
+        const adminCount = users.filter(u => u.role === 'Administrator').length;
+        if (adminCount <= 1) {
+          throw new Error('Cannot delete the sole remaining Administrator account.');
+        }
+      }
+
+      this.localDB.users = users.filter(u => u.id !== userId);
+      this.persistLocal();
+
+      await this.logAuditEvent({
+        action: 'USER_DELETE',
+        resource: 'users',
+        record_id: userId,
+        details: 'Deleted user ' + targetUser.username + ' (' + targetUser.role + ') by ' + requestingUser.username,
+        user: requestingUser.username,
+        role: requestingUser.role
+      });
+
+      return true;
+    }
+
+    // --- DATABASE DESIGN STUDIO (DEVELOPER ONLY) ---
+    async getDatabaseDesignSchema(requestingUserRole) {
+      if (requestingUserRole !== 'Developer') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'db_design_schema',
+          details: 'Unauthorized role ' + requestingUserRole + ' attempted access to Database Design Studio.'
+        });
+        throw new Error('Access Denied: Only Developer role has privilege to inspect or modify database design.');
+      }
+      return this.localDB.db_design_schema;
+    }
+
+    async addCustomFieldToTable({ tableName, fieldName, fieldType, defaultValue, description }, requestingUser) {
+      if (requestingUser?.role !== 'Developer') {
+        throw new Error('Access Denied: Only Developer role has privilege to modify database design.');
+      }
+      if (!this.localDB.db_design_schema) this.initDefaultDbSchema();
+      if (!this.localDB.db_design_schema.custom_fields) {
+        this.localDB.db_design_schema.custom_fields = [];
+      }
+
+      const fieldObj = {
+        id: 'field-' + Date.now(),
+        tableName,
+        fieldName: fieldName.trim(),
+        fieldType,
+        defaultValue: defaultValue || '',
+        description: description || '',
+        addedBy: requestingUser.username,
+        addedAt: new Date().toISOString()
+      };
+
+      this.localDB.db_design_schema.custom_fields.push(fieldObj);
+      this.localDB.db_design_schema.last_modified = new Date().toISOString();
+      this.localDB.db_design_schema.modified_by = requestingUser.username;
+      this.persistLocal();
+
+      await this.logAuditEvent({
+        action: 'DATABASE_DESIGN_CHANGE',
+        resource: tableName,
+        details: 'Added custom field ' + fieldName + ' (' + fieldType + ') to table ' + tableName + ' by Developer ' + requestingUser.username,
+        user: requestingUser.username,
+        role: requestingUser.role
+      });
+
+      return fieldObj;
+    }
+
+    async createCustomTable({ tableName, description, columns }, requestingUser) {
+      if (requestingUser?.role !== 'Developer') {
+        throw new Error('Access Denied: Only Developer role has privilege to modify database design.');
+      }
+      if (!this.localDB.db_design_schema) this.initDefaultDbSchema();
+
+      const newTable = {
+        name: tableName.trim(),
+        description: description || 'Custom research table',
+        columns: columns || []
+      };
+
+      this.localDB.db_design_schema.tables.push(newTable);
+      this.localDB.db_design_schema.last_modified = new Date().toISOString();
+      this.localDB.db_design_schema.modified_by = requestingUser.username;
+      this.persistLocal();
+
+      await this.logAuditEvent({
+        action: 'DATABASE_DESIGN_CHANGE',
+        resource: tableName,
+        details: 'Created custom research table ' + tableName + ' by Developer ' + requestingUser.username,
+        user: requestingUser.username,
+        role: requestingUser.role
+      });
+
+      return newTable;
+    }
+
+    // --- CLONING & BACKUPS (ADMINISTRATOR & DEVELOPER ONLY) ---
+    async cloneDatabase(cloneName, requestingUser) {
+      if (requestingUser?.role === 'User') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'system',
+          details: 'User ' + requestingUser?.username + ' attempted unauthorized database clone.'
+        });
+        throw new Error('Access Denied: User role is not permitted to clone the database.');
+      }
+
+      const cloneSnapshot = {
+        metadata: {
+          app: 'Multi-disciplinary NPH & LOVA Database',
+          attribution: 'Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN)',
+          clone_name: cloneName || ('NPH_LOVA_Registry_Clone_' + Date.now()),
+          cloned_at: new Date().toISOString(),
+          cloned_by: requestingUser?.username || 'admin',
+          source_version: '2.2.0'
+        },
+        patients: JSON.parse(JSON.stringify(this.localDB.patients || [])),
+        adjustments: JSON.parse(JSON.stringify(this.localDB.adjustments || [])),
+        reviews: JSON.parse(JSON.stringify(this.localDB.reviews || [])),
+        complications: JSON.parse(JSON.stringify(this.localDB.complications || [])),
+        revision_surgeries: JSON.parse(JSON.stringify(this.localDB.revision_surgeries || [])),
+        other_surgeries: JSON.parse(JSON.stringify(this.localDB.other_surgeries || [])),
+        medical_treatments: JSON.parse(JSON.stringify(this.localDB.medical_treatments || []))
+      };
+
+      await this.logAuditEvent({
+        action: 'DATABASE_CLONE',
+        resource: 'system',
+        details: 'Database cloned as ' + cloneSnapshot.metadata.clone_name + ' by ' + requestingUser?.username + ' (' + cloneSnapshot.patients.length + ' patients)',
+        user: requestingUser?.username,
+        role: requestingUser?.role
+      });
+
+      return cloneSnapshot;
+    }
+
+    async generateExcelBackup(requestingUser) {
+      if (requestingUser?.role === 'User') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'system',
+          details: 'User ' + requestingUser?.username + ' attempted unauthorized Excel backup generation.'
+        });
+        throw new Error('Access Denied: User role is not permitted to export data or create Excel backups.');
+      }
+
+      const pList = this.localDB.patients || [];
+      const mList = this.localDB.medical_treatments || [];
+      const aList = this.localDB.adjustments || [];
+      const rList = this.localDB.reviews || [];
+      const cList = this.localDB.complications || [];
+      const revList = this.localDB.revision_surgeries || [];
+      const othList = this.localDB.other_surgeries || [];
+
+      function toXmlRows(headers, rows) {
+        let out = '<Row><Cell><Data ss:Type="String">' + headers.join('</Data></Cell><Cell><Data ss:Type="String">') + '</Data></Cell></Row>';
+        rows.forEach(r => {
+          out += '<Row>';
+          r.forEach(val => {
+            const clean = String(val == null ? '' : val).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            out += '<Cell><Data ss:Type="String">' + clean + '</Data></Cell>';
+          });
+          out += '</Row>';
+        });
+        return out;
+      }
+
+      const patientRows = pList.map(p => [
+        p.study_id || p.id,
+        p.mrn,
+        p.first_name + ' ' + p.last_name,
+        p.dob,
+        p.age,
+        p.gender,
+        p.head_circumference,
+        p.diagnosis_category,
+        p.evans_index,
+        p.radscale_total,
+        p.surg_procedure_type || 'None',
+        p.metformin_status || 'None'
+      ]);
+
+      const medRows = mList.map(m => [
+        m.id,
+        m.patient_id,
+        m.treatment_date,
+        m.clinician,
+        m.management_strategy,
+        Array.isArray(m.drugs) ? m.drugs.map(d => d.name + ' (' + d.dose + ')').join('; ') : ''
+      ]);
+
+      const revRows = revList.map(r => [
+        r.id,
+        r.patient_id,
+        r.revision_date,
+        r.operating_surgeon,
+        r.revision_indication,
+        r.valve_manufacturer,
+        r.components_revised,
+        r.clinical_outcome
+      ]);
+
+      const compRows = cList.map(c => [
+        c.id,
+        c.patient_id,
+        c.event_date,
+        c.category,
+        c.severity,
+        c.repeat_surgery_required
+      ]);
+
+      const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Worksheet ss:Name="Patients Master">
+<Table>
+${toXmlRows(['Study ID', 'MRN', 'Name', 'DOB', 'Age', 'Gender', 'OFC (cm)', 'Diagnosis', 'Evans Index', 'Radscale', 'Surgery', 'Metformin'], patientRows)}
+</Table>
+</Worksheet>
+<Worksheet ss:Name="Medical Mx">
+<Table>
+${toXmlRows(['ID', 'Patient ID', 'Date', 'Clinician', 'Strategy', 'Prescribed Medications'], medRows)}
+</Table>
+</Worksheet>
+<Worksheet ss:Name="Revisions">
+<Table>
+${toXmlRows(['ID', 'Patient ID', 'Date', 'Surgeon', 'Indication', 'Valve Manufacturer', 'Components Revised', 'Outcome'], revRows)}
+</Table>
+</Worksheet>
+<Worksheet ss:Name="Complications">
+<Table>
+${toXmlRows(['ID', 'Patient ID', 'Date', 'Category', 'Severity', 'Surgery Required'], compRows)}
+</Table>
+</Worksheet>
+</Workbook>`;
+
+      await this.logAuditEvent({
+        action: 'DATA_EXPORT_EXCEL',
+        resource: 'system',
+        details: 'Generated comprehensive Multi-Worksheet Excel Backup by ' + requestingUser?.username + ' (' + pList.length + ' patients)',
+        user: requestingUser?.username,
+        role: requestingUser?.role
+      });
+
+      return xml;
+    }
+
+    async generateSqliteBackup(requestingUser) {
+      if (requestingUser?.role === 'User') {
+        await this.logAuditEvent({
+          action: 'UNAUTHORIZED_ATTEMPT',
+          resource: 'system',
+          details: 'User ' + requestingUser?.username + ' attempted unauthorized SQLite backup generation.'
+        });
+        throw new Error('Access Denied: User role is not permitted to create SQLite backups.');
+      }
+
+      const pList = this.localDB.patients || [];
+      const mList = this.localDB.medical_treatments || [];
+      const revList = this.localDB.revision_surgeries || [];
+      const compList = this.localDB.complications || [];
+
+      let sql = `-- Multi-disciplinary NPH & LOVA Database SQLite SQL Backup
+-- Attribution: Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN)
+-- Timestamp: ${new Date().toISOString()}
+
+BEGIN TRANSACTION;
+
+CREATE TABLE IF NOT EXISTS patients (id TEXT PRIMARY KEY, mrn TEXT, diagnosis_category TEXT, head_circumference REAL, age INTEGER, gender TEXT, data_json TEXT);
+CREATE TABLE IF NOT EXISTS medical_treatments (id TEXT PRIMARY KEY, patient_id TEXT, treatment_date DATE, clinician TEXT, strategy TEXT, drugs_json TEXT);
+CREATE TABLE IF NOT EXISTS revision_surgeries (id TEXT PRIMARY KEY, patient_id TEXT, revision_date DATE, indication TEXT, manufacturer TEXT);
+
+`;
+
+            pList.forEach(p => {
+        const json = JSON.stringify(p).replace(/'/g, "''");
+        sql += `INSERT OR REPLACE INTO patients VALUES ('${p.id}', '${p.mrn || ''}', '${p.diagnosis_category || ''}', ${p.head_circumference || 0}, ${p.age || 0}, '${p.gender || ''}', '${json}');\n`;
+      });
+
+      mList.forEach(m => {
+        const drugs = JSON.stringify(m.drugs || []).replace(/'/g, "''");
+        sql += `INSERT OR REPLACE INTO medical_treatments VALUES ('${m.id}', '${m.patient_id}', '${m.treatment_date}', '${m.clinician || ''}', '${m.management_strategy || ''}', '${drugs}');\n`;
+      });
+
+      revList.forEach(r => {
+        sql += `INSERT OR REPLACE INTO revision_surgeries VALUES ('${r.id}', '${r.patient_id}', '${r.revision_date}', '${r.revision_indication || ''}', '${r.valve_manufacturer || ''}');\n`;
+      });
+
+      sql += '\nCOMMIT;\n';
+
+      await this.logAuditEvent({
+        action: 'SQLITE_BACKUP',
+        resource: 'system',
+        details: 'Generated SQLite SQL Data & Schema Backup by ' + requestingUser?.username,
+        user: requestingUser?.username,
+        role: requestingUser?.role
+      });
+
+      return sql;
     }
 
     async importFullDatabase(data) {

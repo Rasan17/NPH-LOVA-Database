@@ -1,3 +1,13 @@
+
+window.quickFillLogin = function(u, p) {
+  const uInput = document.getElementById('login-username');
+  const pInput = document.getElementById('login-password');
+  if (uInput) uInput.value = u;
+  if (pInput) pInput.value = p;
+  const alertEl = document.getElementById('login-error-alert');
+  if (alertEl) alertEl.style.display = 'none';
+};
+
 /**
  * NPH-LOVA Database - Master Frontend Controller (app.js)
  * Tying UI, reactive scoring engines, database adapter, and Tauri IPC together.
@@ -5,6 +15,7 @@
 
 // Global State
 window.AppState = {
+  currentUser: null,
   activePatientId: null,
   activePatientData: null,
   patientsList: [],
@@ -134,6 +145,73 @@ function setupEventListeners() {
   document.getElementById('form-modal-revision-surgery')?.addEventListener('submit', handleRevisionSurgerySubmit);
   document.getElementById('form-modal-other-surgery')?.addEventListener('submit', handleOtherSurgerySubmit);
   document.getElementById('form-modal-medical-treatment')?.addEventListener('submit', handleMedicalTreatmentSubmit);
+
+  // --- Authentication & User Governance Listeners ---
+  document.getElementById('form-login')?.addEventListener('submit', handleLoginSubmit);
+  document.getElementById('btn-user-menu-trigger')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const dropdown = document.getElementById('user-menu-dropdown');
+    dropdown?.classList.toggle('show');
+  });
+
+  document.addEventListener('click', () => {
+    document.getElementById('user-menu-dropdown')?.classList.remove('show');
+  });
+
+  document.getElementById('btn-trigger-change-password')?.addEventListener('click', () => {
+    openModal('modal-change-password');
+  });
+
+  document.getElementById('form-change-password')?.addEventListener('submit', handleChangePasswordSubmit);
+
+  document.getElementById('btn-trigger-user-mgmt')?.addEventListener('click', () => {
+    openModal('modal-user-management');
+    loadUsersTable();
+  });
+
+  document.getElementById('form-create-user')?.addEventListener('submit', handleCreateUserSubmit);
+  document.getElementById('btn-trigger-logout')?.addEventListener('click', handleLogout);
+
+  // --- Database Operations & Backups Listeners ---
+  document.getElementById('btn-db-ops')?.addEventListener('click', () => {
+    openModal('modal-db-operations');
+  });
+
+  document.getElementById('btn-op-excel-backup')?.addEventListener('click', handleExcelBackup);
+  document.getElementById('btn-op-sqlite-backup')?.addEventListener('click', handleSqliteBackup);
+  document.getElementById('btn-op-clone-db')?.addEventListener('click', handleCloneDatabase);
+  document.getElementById('btn-op-json-backup')?.addEventListener('click', exportDatabase);
+  document.getElementById('btn-op-json-import')?.addEventListener('click', () => {
+    document.getElementById('file-import-input')?.click();
+  });
+
+  // --- Audit Log Listeners ---
+  document.getElementById('btn-audit-log')?.addEventListener('click', () => {
+    openModal('modal-audit-log');
+    loadAuditLogsTable();
+    verifyAndDisplayAuditChain();
+  });
+
+  document.getElementById('btn-verify-audit-chain')?.addEventListener('click', verifyAndDisplayAuditChain);
+  document.getElementById('audit-search-input')?.addEventListener('input', loadAuditLogsTable);
+  document.getElementById('audit-filter-action')?.addEventListener('change', loadAuditLogsTable);
+  document.getElementById('btn-export-audit-report')?.addEventListener('click', exportAuditReport);
+
+  // --- Database Design Studio Listeners (Developer Only) ---
+  document.getElementById('btn-db-design')?.addEventListener('click', () => {
+    if (AppState.currentUser?.role !== 'Developer') {
+      alert('Access Denied: Only Developer tier may access the Database Design Studio.');
+      return;
+    }
+    openModal('modal-database-design');
+    loadDatabaseDesignStudio();
+  });
+
+  document.getElementById('form-add-custom-field')?.addEventListener('submit', handleAddCustomFieldSubmit);
+
+  // --- Delete Patient Listener ---
+  document.getElementById('btn-delete-patient')?.addEventListener('click', handleDeletePatient);
+
 
   // Medical Treatment Modal Open
   document.getElementById('btn-new-medical-treatment')?.addEventListener('click', () => {
@@ -1960,4 +2038,435 @@ function renderCohortAnalytics() {
 function setElText(id, val) {
   const el = document.getElementById(id);
   if (el) el.textContent = val;
+}
+
+
+// =========================================================================
+// AUTHENTICATION & ACCESS CONTROL (RBAC) CONTROLLERS
+// =========================================================================
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const username = document.getElementById('login-username')?.value.trim();
+  const password = document.getElementById('login-password')?.value;
+  const alertEl = document.getElementById('login-error-alert');
+
+  if (!username || !password) return;
+
+  try {
+    const res = await DatabaseAdapter.authenticateUser(username, password);
+    if (!res.success) {
+      if (alertEl) {
+        alertEl.textContent = res.message || 'Invalid username or password.';
+        alertEl.style.display = 'block';
+      }
+      return;
+    }
+
+    AppState.currentUser = res.user;
+    if (alertEl) alertEl.style.display = 'none';
+
+    // Hide login overlay
+    const overlay = document.getElementById('modal-login-barrier');
+    if (overlay) overlay.style.display = 'none';
+
+    // Apply permissions
+    applyRolePermissions(AppState.currentUser);
+
+    // Refresh UI & directory
+    await refreshPatientDirectory();
+    if (AppState.patientsList.length > 0 && !AppState.activePatientId) {
+      await loadPatient(AppState.patientsList[0].id);
+    }
+  } catch (err) {
+    if (alertEl) {
+      alertEl.textContent = err.message || 'Authentication error';
+      alertEl.style.display = 'block';
+    }
+  }
+}
+
+async function handleLogout() {
+  if (confirm('Are you sure you want to sign out of the database session?')) {
+    await DatabaseAdapter.logAuditEvent({
+      action: 'DATABASE_LOGOUT',
+      resource: 'system',
+      details: 'User ' + (AppState.currentUser?.username || 'unknown') + ' signed out.'
+    });
+
+    AppState.currentUser = null;
+    document.getElementById('form-login')?.reset();
+    const overlay = document.getElementById('modal-login-barrier');
+    if (overlay) overlay.style.display = 'flex';
+  }
+}
+
+function applyRolePermissions(user) {
+  if (!user) return;
+
+  // Header user widget
+  const nameEl = document.getElementById('header-user-name');
+  if (nameEl) nameEl.textContent = user.full_name || user.username;
+
+  const roleEl = document.getElementById('header-user-role-badge');
+  if (roleEl) {
+    roleEl.textContent = user.role;
+    roleEl.className = 'badge ' + (
+      user.role === 'Developer' ? 'role-badge-dev' :
+      user.role === 'Administrator' ? 'role-badge-admin' : 'role-badge-user'
+    );
+  }
+
+  const avatarEl = document.getElementById('user-avatar-initial');
+  if (avatarEl) {
+    avatarEl.textContent = (user.full_name || user.username).charAt(0).toUpperCase();
+  }
+
+  const isUser = user.role === 'User';
+  const isAdmin = user.role === 'Administrator';
+  const isDev = user.role === 'Developer';
+
+  // Backups & Operations (Admin & Dev only)
+  const btnDbOps = document.getElementById('btn-db-ops');
+  if (btnDbOps) btnDbOps.style.display = (isAdmin || isDev) ? 'inline-flex' : 'none';
+
+  // Audit Ledger (Admin & Dev only)
+  const btnAudit = document.getElementById('btn-audit-log');
+  if (btnAudit) btnAudit.style.display = (isAdmin || isDev) ? 'inline-flex' : 'none';
+
+  // DB Design Studio (Developer ONLY)
+  const btnDesign = document.getElementById('btn-db-design');
+  if (btnDesign) btnDesign.style.display = isDev ? 'inline-flex' : 'none';
+
+  // User Management Menu Item (Admin & Dev only)
+  const itemUserMgmt = document.getElementById('btn-trigger-user-mgmt');
+  if (itemUserMgmt) itemUserMgmt.style.display = (isAdmin || isDev) ? 'flex' : 'none';
+
+  // Delete Patient Button (Admin & Dev only)
+  const btnDelPat = document.getElementById('btn-delete-patient');
+  if (btnDelPat) btnDelPat.style.display = (isAdmin || isDev) ? 'inline-flex' : 'none';
+
+  // Export Buttons on Cohort Tab (Admin & Dev only)
+  const btnCsv = document.getElementById('btn-cohort-export-csv');
+  if (btnCsv) btnCsv.style.display = (isAdmin || isDev) ? 'inline-flex' : 'none';
+
+  const btnJson = document.getElementById('btn-cohort-export-json');
+  if (btnJson) btnJson.style.display = (isAdmin || isDev) ? 'inline-flex' : 'none';
+
+  // Adjust delete action buttons visibility on tables
+  document.querySelectorAll('.btn-delete-record, .btn-delete-treatment').forEach(btn => {
+    btn.style.display = isUser ? 'none' : 'inline-block';
+  });
+}
+
+async function handleChangePasswordSubmit(e) {
+  e.preventDefault();
+  if (!AppState.currentUser) return;
+
+  const curPw = document.getElementById('pw-current')?.value;
+  const newPw = document.getElementById('pw-new')?.value;
+  const confPw = document.getElementById('pw-confirm')?.value;
+
+  if (newPw !== confPw) {
+    alert('New passwords do not match. Please re-enter.');
+    return;
+  }
+
+  try {
+    await DatabaseAdapter.changeUserPassword(AppState.currentUser.username, curPw, newPw);
+    alert('Password updated successfully.');
+    document.getElementById('form-change-password')?.reset();
+    closeModal('modal-change-password');
+  } catch (err) {
+    alert(err.message || 'Error updating password');
+  }
+}
+
+async function loadUsersTable() {
+  if (!AppState.currentUser || (AppState.currentUser.role !== 'Administrator' && AppState.currentUser.role !== 'Developer')) return;
+  const tbody = document.getElementById('tbody-users-list');
+  if (!tbody) return;
+
+  try {
+    const users = await DatabaseAdapter.getAllUsers(AppState.currentUser.role);
+    tbody.innerHTML = users.map(u => {
+      const isSelf = u.username.toLowerCase() === AppState.currentUser.username.toLowerCase();
+      const badgeClass = u.role === 'Developer' ? 'role-badge-dev' : (u.role === 'Administrator' ? 'role-badge-admin' : 'role-badge-user');
+      const deleteDisabled = isSelf ? 'disabled title="Cannot delete active session account"' : '';
+
+      return '<tr>' +
+        '<td><strong class="font-mono">' + escapeHtml(u.username) + '</strong></td>' +
+        '<td>' + escapeHtml(u.full_name || '--') + '</td>' +
+        '<td><span class="badge ' + badgeClass + '">' + u.role + '</span></td>' +
+        '<td class="font-mono text-muted text-xs">' + (u.created_at ? u.created_at.split('T')[0] : '--') + '</td>' +
+        '<td class="font-mono text-xs">' + (u.last_login ? u.last_login.replace('T', ' ').substring(0, 16) : 'Never') + '</td>' +
+        '<td><button type="button" class="btn btn-danger btn-xs" onclick="handleDeleteUser(\'' + u.id + '\')" ' + deleteDisabled + '>Delete</button></td>' +
+        '</tr>';
+    }).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">' + escapeHtml(e.message) + '</td></tr>';
+  }
+}
+
+window.handleDeleteUser = async function(userId) {
+  if (!confirm('Are you sure you want to permanently delete this user account?')) return;
+  try {
+    await DatabaseAdapter.deleteUser(userId, AppState.currentUser);
+    await loadUsersTable();
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+async function handleCreateUserSubmit(e) {
+  e.preventDefault();
+  if (!AppState.currentUser) return;
+
+  const username = document.getElementById('new-usr-username')?.value.trim();
+  const full_name = document.getElementById('new-usr-fullname')?.value.trim();
+  const role = document.getElementById('new-usr-role')?.value;
+  const password = document.getElementById('new-usr-password')?.value;
+
+  try {
+    await DatabaseAdapter.createUser({ username, password, full_name, role }, AppState.currentUser);
+    alert('User account ' + username + ' created successfully.');
+    document.getElementById('form-create-user')?.reset();
+    await loadUsersTable();
+  } catch (err) {
+    alert(err.message || 'Error creating user');
+  }
+}
+
+// --- DATABASE OPERATIONS (BACKUPS, CLONES) ---
+
+async function handleExcelBackup() {
+  if (AppState.currentUser?.role === 'User') {
+    alert("Permission Denied: The 'User' role is not permitted to export data or create Excel backups.");
+    return;
+  }
+  try {
+    const xml = await DatabaseAdapter.generateExcelBackup(AppState.currentUser);
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'NPH_LOVA_Registry_Backup_' + new Date().toISOString().split('T')[0] + '.xls';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function handleSqliteBackup() {
+  if (AppState.currentUser?.role === 'User') {
+    alert("Permission Denied: The 'User' role is not permitted to create SQLite backups.");
+    return;
+  }
+  try {
+    const sql = await DatabaseAdapter.generateSqliteBackup(AppState.currentUser);
+    const blob = new Blob([sql], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'NPH_LOVA_SQLite_Backup_' + new Date().toISOString().split('T')[0] + '.sql';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function handleCloneDatabase() {
+  if (AppState.currentUser?.role === 'User') {
+    alert("Permission Denied: The 'User' role is not permitted to clone the database.");
+    return;
+  }
+  const cloneName = document.getElementById('clone-name-input')?.value.trim();
+  try {
+    const clone = await DatabaseAdapter.cloneDatabase(cloneName, AppState.currentUser);
+    const blob = new Blob([JSON.stringify(clone, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = clone.metadata.clone_name + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    alert('Database successfully cloned as ' + clone.metadata.clone_name + ' with ' + clone.patients.length + ' patient records.');
+    closeModal('modal-db-operations');
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// --- ENCRYPTED AUDIT LOG CONTROLLERS ---
+
+async function loadAuditLogsTable() {
+  if (!AppState.currentUser || (AppState.currentUser.role !== 'Administrator' && AppState.currentUser.role !== 'Developer')) return;
+  const tbody = document.getElementById('tbody-audit-log');
+  if (!tbody) return;
+
+  const searchQuery = document.getElementById('audit-search-input')?.value.toLowerCase().trim() || '';
+  const filterAction = document.getElementById('audit-filter-action')?.value || 'ALL';
+
+  try {
+    const logs = await DatabaseAdapter.getDecryptedAuditLogs(AppState.currentUser.role);
+    const filtered = logs.filter(log => {
+      if (filterAction !== 'ALL' && log.action !== filterAction) return false;
+      if (searchQuery) {
+        const text = (log.timestamp + ' ' + log.user_id + ' ' + log.role + ' ' + log.action + ' ' + log.resource + ' ' + log.details_preview + ' ' + (log.decrypted?.details || '')).toLowerCase();
+        if (!text.includes(searchQuery)) return false;
+      }
+      return true;
+    });
+
+    tbody.innerHTML = filtered.map(log => {
+      let actionBadgeClass = 'badge-audit-login';
+      if (log.action.includes('CREATE')) actionBadgeClass = 'badge-audit-create';
+      else if (log.action.includes('UPDATE')) actionBadgeClass = 'badge-audit-update';
+      else if (log.action.includes('DELETE')) actionBadgeClass = 'badge-audit-delete';
+      else if (log.action.includes('UNAUTHORIZED') || log.action.includes('FAILED')) actionBadgeClass = 'badge-audit-unauth';
+      else if (log.action.includes('DESIGN') || log.action.includes('SCHEMA')) actionBadgeClass = 'badge-audit-schema';
+
+      const details = log.decrypted?.details || log.details_preview;
+      const hashShort = log.entry_hash ? log.entry_hash.substring(0, 10) + '...' : '--';
+
+      return '<tr>' +
+        '<td class="font-mono text-xs">' + (log.timestamp ? log.timestamp.replace('T', ' ').substring(0, 19) : '--') + '</td>' +
+        '<td><strong>' + escapeHtml(log.user_id) + '</strong> <span class="text-muted text-xs">(' + log.role + ')</span></td>' +
+        '<td><span class="badge ' + actionBadgeClass + '">' + log.action + '</span></td>' +
+        '<td class="font-mono text-xs">' + escapeHtml(log.resource || '--') + '</td>' +
+        '<td style="max-width:320px; font-size:0.8rem;">' + escapeHtml(details) + '</td>' +
+        '<td><span class="audit-hash-code" title="Full SHA-256 seal: ' + log.entry_hash + '">' + hashShort + '</span></td>' +
+        '</tr>';
+    }).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">' + escapeHtml(e.message) + '</td></tr>';
+  }
+}
+
+async function verifyAndDisplayAuditChain() {
+  const banner = document.getElementById('audit-integrity-banner');
+  const textEl = document.getElementById('audit-chain-status-text');
+  if (!textEl) return;
+
+  try {
+    const res = await DatabaseAdapter.verifyAuditChain();
+    if (res.valid) {
+      textEl.innerHTML = '<span class="text-emerald font-bold">&check; Intact & Authentic:</span> ' + res.message;
+      if (banner) banner.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+    } else {
+      textEl.innerHTML = '<span class="text-danger font-bold">&cross; TAMPER ALERT:</span> ' + res.error;
+      if (banner) banner.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+    }
+  } catch (e) {
+    textEl.textContent = 'Verification error: ' + e.message;
+  }
+}
+
+async function exportAuditReport() {
+  try {
+    const logs = await DatabaseAdapter.getDecryptedAuditLogs(AppState.currentUser.role);
+    const chain = await DatabaseAdapter.verifyAuditChain();
+    let report = '========================================================================\n';
+    report += 'NPH & LOVA CLINICAL DATABASE - CRYPTOGRAPHIC AUDIT CERTIFICATE\n';
+    report += 'Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN)\n';
+    report += 'Copyright 2026, Dr G Narenthiran. All rights reserved.\n';
+    report += 'Timestamp: ' + new Date().toISOString() + '\n';
+    report += 'Auditor: ' + AppState.currentUser.username + ' (' + AppState.currentUser.role + ')\n';
+    report += 'Chain Integrity: ' + chain.message + '\n';
+    report += '========================================================================\n\n';
+
+    logs.forEach(l => {
+      report += '[' + l.timestamp + '] ' + l.action + ' by ' + l.user_id + ' (' + l.role + ')\n';
+      report += '   Resource: ' + l.resource + ' | Record: ' + (l.record_id || '--') + '\n';
+      report += '   Details: ' + (l.decrypted?.details || l.details_preview) + '\n';
+      report += '   SHA-256 Seal: ' + l.entry_hash + '\n\n';
+    });
+
+    const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'NPH_LOVA_Audit_Certificate_' + new Date().toISOString().split('T')[0] + '.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// --- DATABASE DESIGN STUDIO (DEVELOPER ONLY) ---
+
+async function loadDatabaseDesignStudio() {
+  if (AppState.currentUser?.role !== 'Developer') return;
+  const container = document.getElementById('schema-tables-container');
+  if (!container) return;
+
+  try {
+    const schema = await DatabaseAdapter.getDatabaseDesignSchema(AppState.currentUser.role);
+    container.innerHTML = schema.tables.map(t => {
+      const colPills = t.columns.map(c => {
+        return '<span class="schema-column-pill">' + escapeHtml(c.name) + ': <span class="text-csf">' + escapeHtml(c.type) + '</span>' + (c.pk ? ' <span class="text-amber font-bold">PK</span>' : '') + '</span>';
+      }).join('');
+
+      return '<div class="schema-table-card">' +
+        '<h5 style="font-size:0.95rem; margin-bottom:0.25rem;"><strong class="font-mono text-purple">' + escapeHtml(t.name) + '</strong></h5>' +
+        '<p class="text-muted text-xs mb-2">' + escapeHtml(t.description || '') + '</p>' +
+        '<div class="mb-2">' + colPills + '</div>' +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div class="text-danger">' + escapeHtml(e.message) + '</div>';
+  }
+}
+
+async function handleAddCustomFieldSubmit(e) {
+  e.preventDefault();
+  if (AppState.currentUser?.role !== 'Developer') {
+    alert('Access Denied: Only Developer role may add custom database fields.');
+    return;
+  }
+
+  const tableName = document.getElementById('schema-target-table')?.value;
+  const fieldName = document.getElementById('schema-field-name')?.value.trim();
+  const fieldType = document.getElementById('schema-field-type')?.value;
+  const defaultValue = document.getElementById('schema-field-default')?.value.trim();
+  const description = document.getElementById('schema-field-desc')?.value.trim();
+
+  try {
+    await DatabaseAdapter.addCustomFieldToTable({ tableName, fieldName, fieldType, defaultValue, description }, AppState.currentUser);
+    alert('Custom field ' + fieldName + ' successfully added to database table ' + tableName + '.');
+    document.getElementById('form-add-custom-field')?.reset();
+    await loadDatabaseDesignStudio();
+  } catch (err) {
+    alert(err.message || 'Error adding custom field');
+  }
+}
+
+async function handleDeletePatient() {
+  if (AppState.currentUser?.role === 'User') {
+    alert("Permission Denied: The 'User' role is not permitted to delete clinical records.");
+    return;
+  }
+  if (!AppState.activePatientId) return;
+  const p = AppState.activePatientData;
+  const name = p ? (p.first_name + ' ' + p.last_name + ' (' + p.mrn + ')') : AppState.activePatientId;
+
+  if (confirm('Are you sure you want to permanently delete patient ' + name + '? This action cannot be undone.')) {
+    try {
+      await DatabaseAdapter.deletePatient(AppState.activePatientId, AppState.currentUser);
+      alert('Patient record ' + name + ' was deleted.');
+      AppState.activePatientId = null;
+      AppState.activePatientData = null;
+      await refreshPatientDirectory();
+      if (AppState.patientsList.length > 0) {
+        await loadPatient(AppState.patientsList[0].id);
+      } else {
+        resetPatientForm();
+      }
+    } catch (e) {
+      alert(e.message);
+    }
+  }
 }

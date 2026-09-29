@@ -352,6 +352,90 @@ impl Database {
                 FOREIGN KEY (treatment_id) REFERENCES surgical_treatment(id) ON DELETE SET NULL
             );
 
+            -- 11. Medical Treatments (Medical Mx)
+            CREATE TABLE IF NOT EXISTS medical_treatments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                patient_id INTEGER NOT NULL,
+                treatment_date DATE DEFAULT CURRENT_DATE,
+                clinician TEXT,
+                management_strategy TEXT,
+                drugs_json TEXT,
+                notes TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+            );
+
+            -- 12. Revision Shunt Surgeries
+            CREATE TABLE IF NOT EXISTS revision_surgeries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                patient_id INTEGER NOT NULL,
+                revision_date DATE DEFAULT CURRENT_DATE,
+                operating_surgeon TEXT,
+                revision_indication TEXT,
+                components_revised TEXT,
+                valve_manufacturer TEXT,
+                new_hardware_details TEXT,
+                new_dp_setting TEXT,
+                new_ag_setting TEXT,
+                intraop_findings TEXT,
+                clinical_outcome TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+            );
+
+            -- 13. Other Collateral Surgeries
+            CREATE TABLE IF NOT EXISTS other_surgeries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                patient_id INTEGER NOT NULL,
+                procedure_date DATE DEFAULT CURRENT_DATE,
+                operating_surgeon TEXT,
+                procedure_name TEXT NOT NULL,
+                indication TEXT,
+                findings TEXT,
+                clinical_outcome TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+            );
+
+            -- 14. User Accounts & Access Control (RBAC)
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                salt TEXT NOT NULL,
+                full_name TEXT NOT NULL,
+                role TEXT CHECK(role IN ('Developer', 'Administrator', 'User')) NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_login DATETIME
+            );
+
+            -- 15. Encrypted Audit Log Ledger (Immutable)
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                user_id TEXT NOT NULL,
+                role TEXT NOT NULL,
+                action TEXT NOT NULL,
+                resource TEXT,
+                record_id TEXT,
+                details TEXT,
+                encrypted_payload TEXT NOT NULL,
+                signature_hash TEXT NOT NULL,
+                prev_hash TEXT NOT NULL
+            );
+
+            -- 16. Database Design & Custom Schema Definitions
+            CREATE TABLE IF NOT EXISTS db_design_schema (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                table_name TEXT NOT NULL,
+                field_name TEXT NOT NULL,
+                field_type TEXT NOT NULL,
+                default_value TEXT,
+                description TEXT,
+                created_by TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
             -- Indexes for high-speed indexing & instant clinical queries
             CREATE INDEX IF NOT EXISTS idx_patients_study_id ON patients(study_id);
             CREATE INDEX IF NOT EXISTS idx_patients_diag ON patients(diagnosis_type);
