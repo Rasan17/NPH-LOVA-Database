@@ -458,6 +458,7 @@
         revision_indication: "Overdrainage Complication (Subdural Hygroma)",
         components_revised: "Anti-Gravity Unit Added / Replaced",
         cranial_entry_site: "Right Frontal (Kocher's Point)",
+        valve_manufacturer: "Miethke (Aesculap)",
         new_hardware_model: "Miethke proSA added to existing proGAV unit",
         new_differential_setting: "12 cmH2O",
         new_antigravity_setting: "25 cmH2O",

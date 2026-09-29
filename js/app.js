@@ -134,6 +134,7 @@ function setupEventListeners() {
     const p = AppState.activePatientData;
     setVal('m-revsurg-date', new Date().toISOString().split('T')[0]);
     setVal('m-revsurg-surgeon', p?.surg_operating_surgeon || p?.consultant_surgeon || '');
+    setVal('m-revsurg-manufacturer', p?.shunt_manufacturer || 'Miethke (Aesculap)');
     setVal('m-revsurg-new-hardware', p?.shunt_model || '');
     setVal('m-revsurg-new-dp', p?.shunt_initial_dp || '');
     setVal('m-revsurg-new-ag', p?.shunt_initial_ag || '');
@@ -814,7 +815,7 @@ async function loadPatientRevisionSurgeries(patientId) {
       <td><span class="badge badge-amber font-semibold">${escapeHtml(r.revision_indication)}</span></td>
       <td><strong>${escapeHtml(r.components_revised)}</strong></td>
       <td class="font-mono text-xs">
-        ${escapeHtml(r.new_hardware_model || '--')} 
+        ${escapeHtml(r.valve_manufacturer ? `${r.valve_manufacturer} - ` : '')}${escapeHtml(r.new_hardware_model || '--')} 
         ${r.new_differential_setting ? `(DP: ${escapeHtml(r.new_differential_setting)})` : ''} 
         ${r.new_antigravity_setting ? `(AG: ${escapeHtml(r.new_antigravity_setting)})` : ''}
       </td>
@@ -868,6 +869,7 @@ async function handleRevisionSurgerySubmit(e) {
     revision_indication: getVal('m-revsurg-indication'),
     components_revised: getVal('m-revsurg-components'),
     cranial_entry_site: getVal('m-revsurg-cranial-entry'),
+    valve_manufacturer: getVal('m-revsurg-manufacturer'),
     new_hardware_model: getVal('m-revsurg-new-hardware'),
     new_differential_setting: getVal('m-revsurg-new-dp'),
     new_antigravity_setting: getVal('m-revsurg-new-ag'),

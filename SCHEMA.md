@@ -247,6 +247,7 @@ Log of operative shunt revisions, component swaps, anti-gravity valve additions,
 | `revision_indication` | TEXT | Proximal occlusion, valve clogging, distal block, overdrainage, infection, etc. |
 | `components_revised` | TEXT | Proximal, valve, anti-gravity unit, distal, complete system, EVD, secondary ETV |
 | `cranial_entry_site` | TEXT | Same Kocher burr hole, contralateral, Keen point, new entry |
+| `valve_manufacturer` | TEXT | Miethke, Codman, Medtronic, Sophysa, Integra, etc. |
 | `new_hardware_model` | TEXT | New valve model (e.g. Miethke proGAV 2.0 with proSA) |
 | `new_differential_setting`| TEXT | Differential pressure setting (e.g. 12 cmH2O) |
 | `new_antigravity_setting` | TEXT | Anti-gravity valve setting (e.g. 25 cmH2O) |
