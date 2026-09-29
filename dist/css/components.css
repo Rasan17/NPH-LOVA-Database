@@ -787,3 +787,180 @@
   font-size: 0.73rem;
   margin: 2px 3px 2px 0;
 }
+
+/* =========================================================================
+   CLINICAL LETTERS & DISCHARGE CORRESPONDENCE STYLES
+   ========================================================================= */
+.letter-layout-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: var(--space-lg);
+  min-height: 580px;
+}
+
+@media (max-width: 1100px) {
+  .letter-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.letter-controls-card {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  overflow-y: auto;
+  max-height: 700px;
+}
+
+.letter-preview-pane {
+  background: #cbd5e1;
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: 700px;
+  display: flex;
+  justify-content: center;
+}
+
+[data-theme="dark"] .letter-preview-pane {
+  background: #0f172a;
+}
+
+.clinical-letter-paper {
+  background: #ffffff;
+  color: #0f172a;
+  width: 100%;
+  max-width: 760px;
+  min-height: 980px;
+  padding: 2.75rem 3rem;
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.letterhead-header {
+  border-bottom: 2px solid #0284c7;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.letterhead-hospital {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0369a1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.letterhead-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.letter-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.85rem 1.15rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.letter-meta-row {
+  margin-bottom: 3px;
+}
+
+.letter-meta-label {
+  font-weight: 700;
+  color: #475569;
+  display: inline-block;
+  min-width: 110px;
+}
+
+.letter-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 3px;
+  margin-top: 1.15rem;
+  margin-bottom: 0.5rem;
+}
+
+.letter-meds-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0 1rem 0;
+  font-size: 0.82rem;
+}
+
+.letter-meds-table th, .letter-meds-table td {
+  border: 1px solid #cbd5e1;
+  padding: 5px 8px;
+  text-align: left;
+}
+
+.letter-meds-table th {
+  background: #f1f5f9;
+  font-weight: 700;
+}
+
+.letter-signoff-box {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.letter-attribution-footer {
+  margin-top: 2.5rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* Print Optimization */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .clinical-letter-paper, .clinical-letter-paper * {
+    visibility: visible;
+  }
+  .clinical-letter-paper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 1.5cm !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .modal-dialog, .modal-backdrop {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: static !important;
+    inset: auto !important;
+  }
+  .modal-header, .modal-footer, .letter-controls-card {
+    display: none !important;
+  }
+}

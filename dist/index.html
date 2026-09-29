@@ -152,9 +152,21 @@
         </div>
       </div>
       <div class="patient-quick-actions">
-        <button id="btn-save-current" class="btn btn-success">
+        <button id="btn-save-current" class="btn btn-success" title="Save changes to active patient record in database">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           Save Changes
+        </button>
+        <button id="btn-save-patient-file" class="btn btn-secondary" title="Save this patient's complete clinical record to file">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          Save File
+        </button>
+        <button id="btn-gen-discharge-letter" class="btn btn-primary" title="Generate Inpatient Discharge Letter following hospital admission">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Discharge Letter
+        </button>
+        <button id="btn-gen-clinic-letter" class="btn btn-secondary" title="Generate Outpatient Clinic Letter following review">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>
+          Clinic Letter
         </button>
         <button id="btn-delete-patient" class="btn btn-danger" title="Delete Patient Record (Admin/Developer only)" style="display:none;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -2895,7 +2907,210 @@
     </div>
   </div>
 
-    <!-- JavaScript Modules -->
+    <!-- MODAL: INPATIENT DISCHARGE LETTER GENERATOR -->
+  <div class="modal-backdrop" id="modal-discharge-letter">
+    <div class="modal-dialog modal-xl" style="max-width: 1200px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title text-csf">Inpatient Discharge Summary Generator</h3>
+          <p class="card-subtitle">Official neurosurgical discharge letter following surgical diversion (VP/LP/ETV), revision, or diagnostic admission.</p>
+        </div>
+        <button class="modal-close" data-close-modal="modal-discharge-letter">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1rem 1.5rem;">
+        <div class="letter-layout-grid">
+          <!-- Left Controls Column -->
+          <div class="letter-controls-card">
+            <h4 class="card-title mb-2 text-csf">Admission Parameters</h4>
+            
+            <div class="form-group mb-2">
+              <label for="dl-adm-date">Admission Date</label>
+              <input type="date" id="dl-adm-date" class="form-control" />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="dl-dis-date">Discharge Date</label>
+              <input type="date" id="dl-dis-date" class="form-control" />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="dl-adm-type">Admission Category</label>
+              <select id="dl-adm-type" class="form-control">
+                <option value="Elective Admission for Ventriculoperitoneal (VP) Shunt Insertion">Elective VP Shunt Insertion</option>
+                <option value="Elective Admission for Endoscopic Third Ventriculostomy (ETV)">Elective ETV</option>
+                <option value="Elective Admission for Lumboperitoneal (LP) Shunt Insertion">Elective LP Shunt Insertion</option>
+                <option value="Elective Admission for Ventriculoatrial (VA) Shunt Insertion">Elective VA Shunt Insertion</option>
+                <option value="Urgent Admission for Shunt Revision / Hardware Re-exploration">Shunt Revision Surgery</option>
+                <option value="Inpatient Admission for CSF Dynamics, Tap Test & Lumbar Drain Trial">Inpatient CSF Studies Trial</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="dl-hospital">Hospital &amp; Department</label>
+              <input type="text" id="dl-hospital" class="form-control" value="Department of Neurosurgery &amp; Hydrocephalus Service" />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="dl-surgeon">Operating Neurosurgeon</label>
+              <input type="text" id="dl-surgeon" class="form-control" />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="dl-neurologist">Consultant Neurologist</label>
+              <input type="text" id="dl-neurologist" class="form-control" />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="dl-postop-ct">Post-Op CT Brain Check</label>
+              <textarea id="dl-postop-ct" class="form-control" rows="2">Catheter accurately positioned in right frontal horn. Satisfactory decompression; no acute hemorrhage or subdural collections.</textarea>
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="dl-wound">Wound &amp; Suture Care</label>
+              <input type="text" id="dl-wound" class="form-control" value="Cranial and abdominal wounds healing well, dry. Clip/suture removal at GP practice at Day 10." />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="dl-driving">DVLA Driving Guidance</label>
+              <input type="text" id="dl-driving" class="form-control" value="Patient advised not to drive for 6 months post-craniotomy/shunt surgery as per national DVLA regulations." />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="dl-followup">Follow-Up Plan</label>
+              <input type="text" id="dl-followup" class="form-control" value="Outpatient Neurosurgical Shunt Clinic in 6 weeks for wound inspection, triad review, and valve setting check." />
+            </div>
+
+            <button type="button" class="btn btn-secondary w-100 mt-2" id="btn-refresh-discharge-letter">
+              &circlearrowright; Refresh Letter Preview
+            </button>
+          </div>
+
+          <!-- Right Preview Column -->
+          <div class="letter-preview-pane">
+            <div class="clinical-letter-paper" id="paper-discharge-letter">
+              <!-- Rendered letter HTML -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-discharge-letter">Close</button>
+        <button type="button" class="btn btn-secondary" id="btn-copy-discharge-letter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy Text
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-download-discharge-letter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download HTML
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-print-discharge-letter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          Print / Save as PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CLINIC LETTER GENERATOR -->
+  <div class="modal-backdrop" id="modal-clinic-letter">
+    <div class="modal-dialog modal-xl" style="max-width: 1200px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title text-emerald">Outpatient Clinic Consultation Letter Generator</h3>
+          <p class="card-subtitle">Comprehensive clinic letter following neurosurgical / neurological follow-up review or pre-operative MDT consultation.</p>
+        </div>
+        <button class="modal-close" data-close-modal="modal-clinic-letter">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1rem 1.5rem;">
+        <div class="letter-layout-grid">
+          <!-- Left Controls Column -->
+          <div class="letter-controls-card">
+            <h4 class="card-title mb-2 text-emerald">Consultation Parameters</h4>
+
+            <div class="form-group mb-2">
+              <label for="cl-date">Clinic Date</label>
+              <input type="date" id="cl-date" class="form-control" />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="cl-milestone">Review Milestone</label>
+              <select id="cl-milestone" class="form-control">
+                <option value="6 Weeks Post-Op">6 Weeks Post-Op Review</option>
+                <option value="3 Months Post-Op">3 Months Post-Op Review</option>
+                <option value="6 Months Post-Op">6 Months Post-Op Review</option>
+                <option value="12 Months Post-Op">12 Months (1 Year) Post-Op Review</option>
+                <option value="2 Years Post-Op">2 Years Post-Op Review</option>
+                <option value="Pre-Operative Multidisciplinary Consultation">Pre-Operative Multidisciplinary Review</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="cl-clinician">Reviewing Clinician</label>
+              <input type="text" id="cl-clinician" class="form-control" />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="cl-recipient">Addressed To (GP / Practice)</label>
+              <input type="text" id="cl-recipient" class="form-control" value="The General Practitioner" />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="cl-gait-notes">Gait &amp; Mobility Evolution</label>
+              <textarea id="cl-gait-notes" class="form-control" rows="2">Gait is visibly more stable and confident. Magnetic component resolved; stride length has improved. No further falls reported.</textarea>
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="cl-cog-notes">Cognition &amp; Alertness</label>
+              <textarea id="cl-cog-notes" class="form-control" rows="2">Spouse notes marked improvement in mental clarity, engagement in conversation, and daily motivation.</textarea>
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="cl-urin-notes">Urinary Function</label>
+              <input type="text" id="cl-urin-notes" class="form-control" value="Urinary urgency significantly diminished; nocturnal frequency reduced from 4 times to 1 time per night." />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="cl-settings">Shunt Settings at this Review</label>
+              <input type="text" id="cl-settings" class="form-control" placeholder="e.g. Current DP 12 cmH2O / AG 20 cmH2O; valve checked and reprogrammed" />
+            </div>
+
+            <div class="form-group mb-2">
+              <label for="cl-plan">Ongoing Plan &amp; Next Follow-Up</label>
+              <input type="text" id="cl-plan" class="form-control" value="Continue current shunt setting. Routine neurosurgical follow-up in 6 months with repeat Timed Walk Test and MoCA." />
+            </div>
+
+            <button type="button" class="btn btn-secondary w-100 mt-2" id="btn-refresh-clinic-letter">
+              &circlearrowright; Refresh Letter Preview
+            </button>
+          </div>
+
+          <!-- Right Preview Column -->
+          <div class="letter-preview-pane">
+            <div class="clinical-letter-paper" id="paper-clinic-letter">
+              <!-- Rendered letter HTML -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close-modal="modal-clinic-letter">Close</button>
+        <button type="button" class="btn btn-secondary" id="btn-copy-clinic-letter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy Text
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-download-clinic-letter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download HTML
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-print-clinic-letter">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          Print / Save as PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
   <script src="js/schema.js"></script>
   <script src="js/scoring-engines.js"></script>
   <script src="js/db-adapter.js"></script>

@@ -103,6 +103,20 @@ function setupEventListeners() {
 
   // Save Patient
   document.getElementById('btn-save-current')?.addEventListener('click', saveCurrentPatient);
+  document.getElementById('btn-save-patient-file')?.addEventListener('click', handleSavePatientFile);
+  document.getElementById('btn-gen-discharge-letter')?.addEventListener('click', openDischargeLetterModal);
+  document.getElementById('btn-gen-clinic-letter')?.addEventListener('click', openClinicLetterModal);
+
+  // Letter Action Buttons
+  document.getElementById('btn-refresh-discharge-letter')?.addEventListener('click', renderDischargeLetter);
+  document.getElementById('btn-print-discharge-letter')?.addEventListener('click', () => window.print());
+  document.getElementById('btn-copy-discharge-letter')?.addEventListener('click', copyDischargeLetterText);
+  document.getElementById('btn-download-discharge-letter')?.addEventListener('click', downloadDischargeLetterHtml);
+
+  document.getElementById('btn-refresh-clinic-letter')?.addEventListener('click', renderClinicLetter);
+  document.getElementById('btn-print-clinic-letter')?.addEventListener('click', () => window.print());
+  document.getElementById('btn-copy-clinic-letter')?.addEventListener('click', copyClinicLetterText);
+  document.getElementById('btn-download-clinic-letter')?.addEventListener('click', downloadClinicLetterHtml);
 
   // Dropdown Patient Select
   document.getElementById('patient-select-dropdown')?.addEventListener('change', async (e) => {
@@ -2470,3 +2484,478 @@ async function handleDeletePatient() {
     }
   }
 }
+
+
+// =========================================================================
+// PATIENT FILE EXPORT & CLINICAL CORRESPONDENCE ENGINE
+// =========================================================================
+
+async function handleSavePatientFile() {
+  if (!AppState.activePatientId) {
+    alert('Please select or create a patient first before saving a patient file.');
+    return;
+  }
+  const p = AppState.activePatientData;
+  if (!p) {
+    alert('No patient data loaded.');
+    return;
+  }
+
+  // Ensure latest child records are loaded
+  await loadPatientMedicalTreatments(p.id);
+  await loadPatientAdjustments(p.id);
+  await loadPatientReviews(p.id);
+  await loadPatientComplications(p.id);
+  await loadPatientRevisionSurgeries(p.id);
+  await loadPatientOtherSurgeries(p.id);
+
+  const exportBundle = {
+    metadata: {
+      format: "NPH_LOVA_Clinical_Record_v2",
+      app: "Multi-disciplinary NPH & LOVA Database",
+      attribution: "Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN)",
+      copyright: "Copyright 2026, Dr G Narenthiran, g_narenthiran@hotmail.com, all rights reserved.",
+      exported_at: new Date().toISOString(),
+      exported_by: AppState.currentUser?.username || "Clinician"
+    },
+    patient: p,
+    medical_treatments: AppState.medicalTreatmentsList || [],
+    surgical_hardware: {
+      procedure_type: p.surg_procedure_type,
+      procedure_date: p.surg_date,
+      operating_surgeon: p.surg_operating_surgeon,
+      cranial_entry: p.surg_cranial_entry,
+      navigation: p.surg_navigation,
+      liliequist_disrupted: p.surg_liliequist_disrupted,
+      manufacturer: p.shunt_manufacturer,
+      model: p.shunt_model,
+      initial_dp: p.shunt_initial_dp,
+      initial_ag: p.shunt_initial_ag,
+      serial_number: p.shunt_serial_number
+    },
+    shunt_adjustments: AppState.adjustmentsList || [],
+    outcomes_reviews: AppState.reviewsList || [],
+    complications: AppState.complicationsList || [],
+    revision_surgeries: AppState.revisionSurgeriesList || [],
+    other_surgeries: AppState.otherSurgeriesList || []
+  };
+
+  const filename = `NPH_LOVA_${(p.mrn || 'MRN').replace(/[^a-zA-Z0-9_-]/g, '_')}_${(p.last_name || 'Patient').replace(/[^a-zA-Z0-9_-]/g, '_')}_${(p.first_name || '').replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
+  const blob = new Blob([JSON.stringify(exportBundle, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  await DatabaseAdapter.logAuditEvent({
+    action: 'DATA_EXPORT_FILE',
+    resource: 'patients',
+    record_id: p.id,
+    details: `Exported complete clinical record file for ${p.first_name} ${p.last_name} (${p.mrn}) as ${filename}`,
+    user: AppState.currentUser?.username,
+    role: AppState.currentUser?.role
+  });
+
+  showNotification(`Patient file ${filename} saved successfully.`, 'success');
+}
+
+window.openDischargeLetterModal = async function() {
+  if (!AppState.activePatientId) {
+    alert('Please select a patient before generating a discharge letter.');
+    return;
+  }
+  const p = AppState.activePatientData;
+  if (!p) return;
+
+  // Set default form values
+  setVal('dl-adm-date', p.surg_date || p.presentation_date || new Date().toISOString().split('T')[0]);
+  setVal('dl-dis-date', new Date().toISOString().split('T')[0]);
+  setVal('dl-surgeon', p.surg_operating_surgeon || p.consultant_surgeon || 'Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN)');
+  setVal('dl-neurologist', p.consultant_neurologist || 'Dr Eleanor Vance MD FRCP');
+
+  if (p.surg_procedure_type) {
+    const sel = document.getElementById('dl-adm-type');
+    if (sel) {
+      if (p.surg_procedure_type.includes('VP')) sel.value = 'Elective Admission for Ventriculoperitoneal (VP) Shunt Insertion';
+      else if (p.surg_procedure_type.includes('ETV')) sel.value = 'Elective Admission for Endoscopic Third Ventriculostomy (ETV)';
+      else if (p.surg_procedure_type.includes('LP')) sel.value = 'Elective Admission for Lumboperitoneal (LP) Shunt Insertion';
+      else if (p.surg_procedure_type.includes('VA')) sel.value = 'Elective Admission for Ventriculoatrial (VA) Shunt Insertion';
+    }
+  }
+
+  await loadPatientMedicalTreatments(p.id);
+  renderDischargeLetter();
+  openModal('modal-discharge-letter');
+};
+
+function renderDischargeLetter() {
+  const p = AppState.activePatientData;
+  if (!p) return;
+
+  const admDate = getVal('dl-adm-date') || '--';
+  const disDate = getVal('dl-dis-date') || '--';
+  const admType = getVal('dl-adm-type') || 'Elective Neurosurgical Admission';
+  const hospital = getVal('dl-hospital') || 'Department of Neurosurgery & Hydrocephalus Service';
+  const surgeon = getVal('dl-surgeon') || 'Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN)';
+  const neurologist = getVal('dl-neurologist') || 'Consultant Neurologist';
+  const ctReport = getVal('dl-postop-ct') || '';
+  const woundInfo = getVal('dl-wound') || '';
+  const drivingInfo = getVal('dl-driving') || '';
+  const followupInfo = getVal('dl-followup') || '';
+
+  // Medications Table
+  let medsRows = '';
+  const medTreatments = AppState.medicalTreatmentsList || [];
+  let allDrugs = [];
+  medTreatments.forEach(m => {
+    if (Array.isArray(m.drugs)) {
+      m.drugs.forEach(d => {
+        allDrugs.push({
+          name: d.name,
+          dose: d.dose || '--',
+          freq: d.freq || 'Daily',
+          route: d.route || 'Oral',
+          indication: d.indication || m.management_strategy || 'Post-op therapy'
+        });
+      });
+    }
+  });
+
+  if (allDrugs.length === 0) {
+    // Standard default post-op medications
+    allDrugs = [
+      { name: 'Paracetamol', dose: '1000 mg', freq: 'QDS PRN', route: 'Oral', indication: 'Mild post-incisional pain' },
+      { name: 'Metformin (if baseline)', dose: p.metformin_daily_dose || '500 mg BD', freq: 'Regular', route: 'Oral', indication: 'Glycemic & glymphatic support' }
+    ];
+  }
+
+  medsRows = allDrugs.map(d => `
+    <tr>
+      <td><strong>${escapeHtml(d.name)}</strong></td>
+      <td>${escapeHtml(d.dose)}</td>
+      <td>${escapeHtml(d.freq)}</td>
+      <td>${escapeHtml(d.route)}</td>
+      <td>${escapeHtml(d.indication)}</td>
+    </tr>
+  `).join('');
+
+  const isLova = p.diagnosis_category === 'LOVA';
+  const hardwareSummary = p.surg_procedure_type ? `
+    <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:4px; padding:0.6rem 0.85rem; margin-top:0.4rem;">
+      <div><strong>Procedure Undertaken:</strong> ${escapeHtml(p.surg_procedure_type)}</div>
+      <div><strong>Valve Hardware:</strong> ${escapeHtml(p.shunt_manufacturer || 'Miethke')} ${escapeHtml(p.shunt_model || 'proGAV 2.0')}</div>
+      <div><strong>Initial Settings:</strong> DP Opening: <span style="color:#0284c7; font-weight:bold;">${escapeHtml(p.shunt_initial_dp || '10 cmH2O')}</span> | Anti-Gravity (proSA): <span style="color:#8b5cf6; font-weight:bold;">${escapeHtml(p.shunt_initial_ag || '20 cmH2O')}</span></div>
+      <div><strong>Surgical Trajectory &amp; Entry:</strong> ${escapeHtml(p.surg_cranial_entry || 'Right Kocher\'s point')} | Navigation: ${p.surg_navigation ? 'Electromagnetic Guided' : 'Stereotactic/Anatomical'}</div>
+      ${p.surg_liliequist_disrupted ? '<div><strong>Endoscopic Liliequist Disruption:</strong> Yes (Prepontine cistern opened to interpeduncular space)</div>' : ''}
+    </div>
+  ` : '<p><em>Diagnostic / conservative inpatient evaluation (no diversionary hardware implanted).</em></p>';
+
+  const html = `
+    <div class="letterhead-header">
+      <div>
+        <div class="letterhead-hospital">${escapeHtml(hospital)}</div>
+        <div class="letterhead-sub">NEUROSURGICAL &amp; HYDROCEPHALUS SERVICE | MULTI-DISCIPLINARY NPH &amp; LOVA REGISTRY</div>
+      </div>
+      <div style="text-align:right; font-size:0.75rem; color:#64748b;">
+        <strong>Date of Discharge:</strong> ${disDate}
+      </div>
+    </div>
+
+    <div style="text-align:center; font-size:1.1rem; font-weight:bold; color:#0369a1; text-transform:uppercase; margin-bottom:1rem; letter-spacing:0.5px;">
+      INPATIENT DISCHARGE SUMMARY
+    </div>
+
+    <div class="letter-meta-grid">
+      <div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Patient Name:</span> <strong>${escapeHtml(p.last_name)}, ${escapeHtml(p.first_name)}</strong></div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Hospital MRN:</span> <strong>${escapeHtml(p.mrn)}</strong></div>
+        <div class="letter-meta-row"><span class="letter-meta-label">DOB / Age:</span> ${p.dob || '--'} (${p.age || '--'} years, ${p.gender || '-'})</div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Head Circumference:</span> ${p.head_circumference || '--'} cm ${isLova ? '(Adult Macrocephaly)' : ''}</div>
+      </div>
+      <div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Admission Date:</span> ${admDate}</div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Discharge Date:</span> ${disDate}</div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Operating Surgeon:</span> ${escapeHtml(surgeon)}</div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Neurologist:</span> ${escapeHtml(neurologist)}</div>
+      </div>
+    </div>
+
+    <div class="letter-section-title">1. Primary Diagnosis &amp; Morphometric Profile</div>
+    <p>
+      <strong>${escapeHtml(p.diagnosis_category)}:</strong> ${(p.diagnosis_category === 'iNPH' ? 'Idiopathic Normal Pressure Hydrocephalus' : (isLova ? 'Long-Standing Overt Ventriculomegaly in Adults (LOVA)' : 'Secondary Hydrocephalus'))}.
+      Evans' Index: <strong>${p.evans_index || '--'}</strong>, Radscale Score: <strong>${p.radscale_total || '--'}/12</strong>${p.desh_tight_vertex ? ' (High-convexity vertex tightness present, classic DESH sign)' : ''}.
+    </p>
+
+    <div class="letter-section-title">2. Surgical Diversion &amp; Shunt Hardware Implanted</div>
+    ${hardwareSummary}
+
+    <div class="letter-section-title">3. Hospital Course, Post-Operative Imaging &amp; Recovery</div>
+    <p>
+      The patient tolerated the surgical procedure without acute intraoperative complications. Post-operatively, the patient was observed on the neurosurgical ward.
+      <strong>Post-Operative Imaging:</strong> ${escapeHtml(ctReport)}<br/>
+      <strong>Wound Condition:</strong> ${escapeHtml(woundInfo)}
+    </p>
+
+    <div class="letter-section-title">4. Discharge Medications &amp; Pharmacotherapy (Medical Mx)</div>
+    <table class="letter-meds-table">
+      <thead>
+        <tr>
+          <th>Medication</th>
+          <th>Dose</th>
+          <th>Frequency</th>
+          <th>Route</th>
+          <th>Indication / Instructions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${medsRows}
+      </tbody>
+    </table>
+
+    <div class="letter-section-title">5. Red Flag Warning Symptoms for Patient &amp; GP</div>
+    <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:4px; padding:0.6rem 0.85rem; font-size:0.82rem; color:#991b1b;">
+      <strong>EMERGENCY CONTACT ADVICE:</strong> Please seek immediate neurosurgical emergency review if the patient experiences:
+      <ul style="margin:4px 0 0 16px; padding:0;">
+        <li>Severe postural headache, nausea, or recurrent vomiting (suggestive of over- or under-drainage).</li>
+        <li>Acute recurrence or sudden worsening of gait failure, unsteadiness, or falls.</li>
+        <li>Wound redness, swelling, purulent discharge, or CSF tracking along the subcutaneous tunnel.</li>
+        <li>Unexplained pyrexia, neck stiffness, photophobia, or acute cognitive disorientation.</li>
+      </ul>
+    </div>
+
+    <div class="letter-section-title">6. Post-Discharge Guidance &amp; Follow-Up Plan</div>
+    <p>
+      <strong>Driving Regulations:</strong> ${escapeHtml(drivingInfo)}<br/>
+      <strong>MRI &amp; Security:</strong> The patient has been provided with their official Shunt Hardware Safety Card indicating programmable valve settings and MR-conditional parameters.<br/>
+      <strong>Outpatient Follow-Up:</strong> ${escapeHtml(followupInfo)}
+    </p>
+
+    <div class="letter-signoff-box">
+      <div>Yours sincerely,</div>
+      <div style="margin-top:0.75rem; font-weight:bold; font-size:0.95rem;">${escapeHtml(surgeon)}</div>
+      <div style="font-size:0.8rem; color:#475569;">Consultant Neurosurgeon | Multi-disciplinary NPH &amp; LOVA Registry</div>
+    </div>
+
+    <div class="letter-attribution-footer">
+      Multi-disciplinary NPH &amp; LOVA Database | Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN)<br/>
+      Copyright 2026, Dr G Narenthiran, g_narenthiran@hotmail.com, all rights reserved. Dedicated to Mrs Nirmaladevy Ganesalingam BSc.
+    </div>
+  `;
+
+  const paper = document.getElementById('paper-discharge-letter');
+  if (paper) paper.innerHTML = html;
+}
+
+window.copyDischargeLetterText = function() {
+  const paper = document.getElementById('paper-discharge-letter');
+  if (paper) {
+    const text = paper.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Discharge letter copied to clipboard.');
+    });
+  }
+};
+
+window.downloadDischargeLetterHtml = function() {
+  const paper = document.getElementById('paper-discharge-letter');
+  const p = AppState.activePatientData;
+  if (!paper || !p) return;
+
+  const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Discharge Summary - ${p.mrn} ${p.last_name}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; line-height: 1.5; color: #0f172a; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 13px; }
+  th, td { border: 1px solid #cbd5e1; padding: 6px 10px; text-align: left; }
+  th { background: #f1f5f9; }
+  .letter-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+${paper.innerHTML}
+</body>
+</html>`;
+
+  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Discharge_Summary_${p.mrn}_${p.last_name}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// --- CLINIC LETTER ENGINE ---
+
+window.openClinicLetterModal = async function() {
+  if (!AppState.activePatientId) {
+    alert('Please select a patient before generating a clinic review letter.');
+    return;
+  }
+  const p = AppState.activePatientData;
+  if (!p) return;
+
+  setVal('cl-date', new Date().toISOString().split('T')[0]);
+  setVal('cl-clinician', p.consultant_neurologist || p.consultant_surgeon || 'Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN)');
+  setVal('cl-recipient', 'The General Practitioner');
+
+  // Load reviews to pick latest
+  await loadPatientReviews(p.id);
+  const latestRev = (AppState.reviewsList || [])[0];
+  if (latestRev) {
+    setVal('cl-milestone', latestRev.interval_name || '6 Weeks Post-Op');
+    setVal('cl-gait-notes', `Gait status: ${latestRev.gait_improvement_status || 'Markedly Improved'}. Timed 10m walk completed in ${latestRev.timed_10m_walk_sec || '11.2'} sec (${latestRev.timed_10m_steps || '18'} steps). Timed Up & Go (TUG): ${latestRev.tug_sec || '13.5'} sec.`);
+    setVal('cl-cog-notes', `Cognitive triad response: ${latestRev.cognition_improvement_status || 'Markedly Improved'}. Current MoCA score: ${latestRev.moca_score || '26'}/30. Patient & family note clearer thinking and improved memory.`);
+    setVal('cl-urin-notes', `Urinary symptoms: ${latestRev.continence_improvement_status || 'Markedly Improved'}. Urgency resolved; nocturia diminished to 1 time per night.`);
+  }
+
+  const dp = p.shunt_initial_dp || '10 cmH2O';
+  const ag = p.shunt_initial_ag || '20 cmH2O';
+  setVal('cl-settings', `Shunt system: ${p.shunt_manufacturer || 'Miethke'} ${p.shunt_model || 'proGAV 2.0'}. Current settings: DP ${dp}, Anti-Gravity (proSA) ${ag}. Valve verified with magnetic compass indicator.`);
+
+  await loadPatientMedicalTreatments(p.id);
+  renderClinicLetter();
+  openModal('modal-clinic-letter');
+};
+
+function renderClinicLetter() {
+  const p = AppState.activePatientData;
+  if (!p) return;
+
+  const clDate = getVal('cl-date') || '--';
+  const milestone = getVal('cl-milestone') || '6 Weeks Post-Op';
+  const clinician = getVal('cl-clinician') || 'Consultant Specialist';
+  const recipient = getVal('cl-recipient') || 'The General Practitioner';
+  const gaitNotes = getVal('cl-gait-notes') || '';
+  const cogNotes = getVal('cl-cog-notes') || '';
+  const urinNotes = getVal('cl-urin-notes') || '';
+  const settingsNotes = getVal('cl-settings') || '';
+  const planNotes = getVal('cl-plan') || '';
+
+  const isLova = p.diagnosis_category === 'LOVA';
+
+  const html = `
+    <div class="letterhead-header">
+      <div>
+        <div class="letterhead-hospital">DEPARTMENT OF CLINICAL NEUROSCIENCES &amp; NEUROSURGERY</div>
+        <div class="letterhead-sub">MULTI-DISCIPLINARY NORMAL PRESSURE HYDROCEPHALUS &amp; ADULT LOVA CLINIC</div>
+      </div>
+      <div style="text-align:right; font-size:0.75rem; color:#64748b;">
+        <strong>Clinic Date:</strong> ${clDate}
+      </div>
+    </div>
+
+    <div style="margin-bottom:1rem; font-size:0.88rem;">
+      <strong>To:</strong> ${escapeHtml(recipient)}<br/>
+      <strong>Re:</strong> Clinic Review Consultation (${escapeHtml(milestone)})
+    </div>
+
+    <div class="letter-meta-grid">
+      <div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Patient Name:</span> <strong>${escapeHtml(p.last_name)}, ${escapeHtml(p.first_name)}</strong></div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Hospital MRN:</span> <strong>${escapeHtml(p.mrn)}</strong></div>
+        <div class="letter-meta-row"><span class="letter-meta-label">DOB / Age:</span> ${p.dob || '--'} (${p.age || '--'} yrs, ${p.gender || '-'})</div>
+      </div>
+      <div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Head Circumference:</span> ${p.head_circumference || '--'} cm ${isLova ? '(Adult Macrocephaly)' : ''}</div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Review Milestone:</span> <strong>${escapeHtml(milestone)}</strong></div>
+        <div class="letter-meta-row"><span class="letter-meta-label">Reviewing Clinician:</span> ${escapeHtml(clinician)}</div>
+      </div>
+    </div>
+
+    <p>
+      Thank you for referring this ${p.age}-year-old patient who was reviewed today in our specialized Hydrocephalus and CSF Disorders Outpatient Clinic at the <strong>${escapeHtml(milestone)}</strong> follow-up milestone.
+    </p>
+
+    <div class="letter-section-title">Clinical Background &amp; Diagnosis</div>
+    <p>
+      <strong>Diagnosis:</strong> ${escapeHtml(p.diagnosis_category)} (${p.diagnosis_category === 'iNPH' ? 'Idiopathic Normal Pressure Hydrocephalus' : (isLova ? 'Long-Standing Overt Ventriculomegaly in Adults' : 'Secondary Hydrocephalus')}).<br/>
+      <strong>Baseline Neuroimaging:</strong> Evans' Index was <strong>${p.evans_index || '--'}</strong>, Radscale score: <strong>${p.radscale_total || '--'}/12</strong>.<br/>
+      <strong>Surgical Procedure:</strong> ${escapeHtml(p.surg_procedure_type || 'Surgical Diversion (Shunt / ETV)')} on ${p.surg_date || 'recorded date'}.
+    </p>
+
+    <div class="letter-section-title">Interval Clinical Progress &amp; Classic Triad Evolution</div>
+    <ul style="margin:4px 0 0 16px; padding:0; line-height:1.6;">
+      <li><strong>Gait &amp; Mobility:</strong> ${escapeHtml(gaitNotes)}</li>
+      <li><strong>Cognitive Function:</strong> ${escapeHtml(cogNotes)}</li>
+      <li><strong>Urinary Symptoms:</strong> ${escapeHtml(urinNotes)}</li>
+    </ul>
+
+    <div class="letter-section-title">Shunt Hardware Status &amp; In-Clinic Valve Settings</div>
+    <p>
+      ${escapeHtml(settingsNotes)}
+    </p>
+
+    <div class="letter-section-title">Medical Management (Medical Mx) &amp; Pharmacotherapy</div>
+    <p>
+      <strong>Metformin Therapy:</strong> ${p.metformin_status === 'Active' ? `Active (${p.metformin_daily_dose || '500 mg BD'}) - maintained for glymphatic clearance and metabolic optimization.` : 'None / Not currently prescribed.'}<br/>
+      <strong>Analgesia &amp; Symptomatic Medications:</strong> Patient is comfortable; incisional discomfort has fully resolved.
+    </p>
+
+    <div class="letter-section-title">Management Plan &amp; Recommendations</div>
+    <p>
+      ${escapeHtml(planNotes)}
+    </p>
+
+    <div class="letter-signoff-box">
+      <div>With best wishes,</div>
+      <div style="margin-top:0.75rem; font-weight:bold; font-size:0.95rem;">${escapeHtml(clinician)}</div>
+      <div style="font-size:0.8rem; color:#475569;">Neurosurgery &amp; Clinical Neurosciences | Multi-disciplinary NPH &amp; LOVA Service</div>
+    </div>
+
+    <div class="letter-attribution-footer">
+      Multi-disciplinary NPH &amp; LOVA Database | Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN)<br/>
+      Copyright 2026, Dr G Narenthiran, g_narenthiran@hotmail.com, all rights reserved. Dedicated to Mrs Nirmaladevy Ganesalingam BSc.
+    </div>
+  `;
+
+  const paper = document.getElementById('paper-clinic-letter');
+  if (paper) paper.innerHTML = html;
+}
+
+window.copyClinicLetterText = function() {
+  const paper = document.getElementById('paper-clinic-letter');
+  if (paper) {
+    const text = paper.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Clinic letter copied to clipboard.');
+    });
+  }
+};
+
+window.downloadClinicLetterHtml = function() {
+  const paper = document.getElementById('paper-clinic-letter');
+  const p = AppState.activePatientData;
+  if (!paper || !p) return;
+
+  const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Clinic Letter - ${p.mrn} ${p.last_name}</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; line-height: 1.5; color: #0f172a; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 13px; }
+  th, td { border: 1px solid #cbd5e1; padding: 6px 10px; text-align: left; }
+  th { background: #f1f5f9; }
+  .letter-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+${paper.innerHTML}
+</body>
+</html>`;
+
+  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Clinic_Letter_${p.mrn}_${p.last_name}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
