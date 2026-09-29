@@ -1,7 +1,7 @@
-# SQLite Database Schema & Data Dictionary
+# Multi-disciplinary NPH & LOVA Database
 ## NPH & LOVA Clinical Registry & Database System
 
-**Conceived and designed for Clinical Biostatistics, Neurosurgery & Hydrocephalus Research**  
+**Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN). Copyright 2026, Dr G Narenthiran, g_narenthiran@hotmail.com, all rights reserved.**  
 by **Dr G Narenthiran MB ChB BSc(MedSci)(Hons) MRCS(Ed.) FEBNS FRCS(SN)**  
 *Dedicated to Mrs Nirmaladevy Ganesalingam BSc.*
 

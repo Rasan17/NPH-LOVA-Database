@@ -67,6 +67,14 @@ body {
   color: var(--text-main);
 }
 
+.brand-attribution {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
 .brand-subtitle {
   font-size: 0.75rem;
   color: var(--text-muted);

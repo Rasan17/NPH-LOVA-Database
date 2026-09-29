@@ -1,7 +1,7 @@
-# NPH & LOVA Clinical Database & Registry System
+# Multi-disciplinary NPH & LOVA Database
 ### Dedicated SQLite Database & Cross-Platform Desktop Software (macOS & Windows)
 
-**Conceived and designed for Clinical Biostatistics, Neurosurgery & Hydrocephalus Research**  
+**Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN). Copyright 2026, Dr G Narenthiran, g_narenthiran@hotmail.com, all rights reserved.**  
 by **Dr G Narenthiran MB ChB BSc(MedSci)(Hons) MRCS(Ed.) FEBNS FRCS(SN)**  
 *Dedicated with heartfelt gratitude to Mrs Nirmaladevy Ganesalingam BSc.*
 
@@ -119,6 +119,6 @@ The calculations, scoring algorithms, and database systems implemented in this s
 
 ## Attribution & Dedication
 
-**Conceived and designed for Clinical Biostatistics, Neurosurgery & Hydrocephalus Research**  
+**Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN). Copyright 2026, Dr G Narenthiran, g_narenthiran@hotmail.com, all rights reserved.**  
 by **Dr G Narenthiran MB ChB BSc(MedSci)(Hons) MRCS(Ed.) FEBNS FRCS(SN)**  
 *Dedicated with heartfelt gratitude to Mrs Nirmaladevy Ganesalingam BSc.*

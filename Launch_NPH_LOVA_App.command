@@ -1,7 +1,8 @@
 #!/bin/bash
 # ==============================================================================
 # NPH & LOVA CLINICAL DATABASE LAUNCHER
-# Conceived & designed for Clinical Biostatistics, Neurosurgery & Hydrocephalus
+# Conceived, designed and tested: Dr G Narenthiran MB ChB BSc(MedSci) MRCS(Ed.) FEBNS FRCS(SN).
+# Copyright 2026, Dr G Narenthiran, g_narenthiran@hotmail.com, all rights reserved.
 # Research by Dr G Narenthiran MB ChB BSc(MedSci)(Hons) MRCS(Ed.) FEBNS FRCS(SN)
 # Dedicated to Mrs Nirmaladevy Ganesalingam BSc
 # ==============================================================================
@@ -10,7 +11,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
 echo "===================================================================="
-echo "    NPH & LOVA CLINICAL REGISTRY & TAURI / SQLITE DATABASE"
+echo "    MULTI-DISCIPLINARY NPH & LOVA DATABASE"
 echo "===================================================================="
 echo "Directory: $DIR"
 echo ""
