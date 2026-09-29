@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "NPH-LOVA-Database",
+  "version": "1.0.0",
+  "identifier": "com.nphlova.database",
+  "build": {
+    "frontendDist": "../"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "NPH & LOVA Clinical & Research Database — Dr G Narenthiran",
+        "width": 1400,
+        "height": 920,
+        "minWidth": 1050,
+        "minHeight": 720,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Medical",
+    "shortDescription": "Comprehensive Clinical & Research Registry for NPH and LOVA",
+    "longDescription": "Specialized neurosurgical database for capturing presentation, imaging, CSF dynamics, treatment, shunt hardware, serial valve adjustments, and longitudinal outcomes in NPH and LOVA.",
+    "copyright": "Copyright © 2026 Dr G Narenthiran MB ChB BSc(MedSci)(Hons) MRCS(Ed.) FEBNS FRCS(SN)",
+    "macOS": {
+      "minimumSystemVersion": "10.13"
+    },
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
+  }
+}

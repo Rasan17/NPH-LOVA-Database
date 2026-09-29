@@ -1,0 +1,20 @@
+{
+  "name": "nph-lova-database",
+  "version": "1.0.0",
+  "description": "Comprehensive Clinical & Research Registry for Normal Pressure Hydrocephalus (NPH) and Long-Standing Overt Ventriculomegaly in Adults (LOVA)",
+  "author": "Dr G Narenthiran MB ChB BSc(MedSci)(Hons) MRCS(Ed.) FEBNS FRCS(SN)",
+  "license": "Proprietary",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "serve": "npx -y serve -l 3000 .",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.1.1",
+    "@tauri-apps/plugin-sql": "^2.1.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0"
+  }
+}
