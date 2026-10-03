@@ -90,6 +90,9 @@ function switchTab(tabId) {
   if (tabId === 'tab-cohort') {
     renderCohortAnalytics();
   }
+  if (tabId === 'tab-ai') {
+    renderAIInsights();
+  }
 }
 
 // Setup Event Listeners
@@ -158,6 +161,44 @@ function setupEventListeners() {
   document.getElementById('form-modal-review')?.addEventListener('submit', handleReviewSubmit);
   document.getElementById('form-modal-complication')?.addEventListener('submit', handleComplicationSubmit);
   document.getElementById('form-modal-revision-surgery')?.addEventListener('submit', handleRevisionSurgerySubmit);
+
+  // AI Intelligence Tab Listeners
+  document.getElementById('btn-recalc-ai')?.addEventListener('click', renderAIInsights);
+  document.getElementById('btn-gen-ai-synthesis')?.addEventListener('click', () => {
+    renderAIInsights();
+    document.getElementById('ai-synthesis-text')?.scrollIntoView({ behavior: 'smooth' });
+  });
+  document.getElementById('btn-refresh-synthesis')?.addEventListener('click', () => {
+    const p = AppState.activePatientData;
+    if (p && window.AIEngine) {
+      const el = document.getElementById('ai-synthesis-text');
+      if (el) el.innerText = AIEngine.generateClinicalSynthesis(p);
+    }
+  });
+  document.getElementById('btn-copy-ai-synthesis')?.addEventListener('click', copyAISynthesis);
+  document.getElementById('btn-copy-synthesis-text')?.addEventListener('click', copyAISynthesis);
+
+  // AI Prompt Chips
+  document.querySelectorAll('.ai-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const query = chip.getAttribute('data-ai-query');
+      const input = document.getElementById('ai-query-input');
+      if (input) input.value = query;
+      handleAICustomQuery(query);
+    });
+  });
+
+  // AI Custom Query Submit
+  document.getElementById('btn-submit-ai-query')?.addEventListener('click', () => {
+    const query = document.getElementById('ai-query-input')?.value || '';
+    handleAICustomQuery(query);
+  });
+  document.getElementById('ai-query-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAICustomQuery(e.target.value);
+    }
+  });
   document.getElementById('form-modal-other-surgery')?.addEventListener('submit', handleOtherSurgerySubmit);
   document.getElementById('form-modal-medical-treatment')?.addEventListener('submit', handleMedicalTreatmentSubmit);
 
@@ -838,6 +879,7 @@ async function loadPatient(id) {
   await loadPatientRevisionSurgeries(id);
   await loadPatientOtherSurgeries(id);
   await loadPatientMedicalTreatments(id);
+  renderAIInsights();
 }
 
 function resetPatientForm() {
@@ -2990,4 +3032,140 @@ ${paper.innerHTML}
   a.download = `Clinic_Letter_${p.mrn}_${p.last_name}.html`;
   a.click();
   URL.revokeObjectURL(url);
+};
+
+
+// =========================================================================
+// AI CLINICAL INTELLIGENCE CONTROLLER
+// =========================================================================
+
+window.renderAIInsights = function() {
+  const patient = AppState.activePatientData;
+  const verdictEl = document.getElementById('ai-kpi-verdict');
+  const confEl = document.getElementById('ai-kpi-confidence');
+  if (!verdictEl) return;
+
+  if (!patient || !window.AIEngine) {
+    verdictEl.textContent = 'No Patient';
+    if (confEl) confEl.textContent = 'Select patient above';
+    document.getElementById('ai-kpi-shunt-score').textContent = '--%';
+    document.getElementById('ai-kpi-shunt-category').textContent = 'Awaiting record selection';
+    document.getElementById('ai-kpi-gait-gain').textContent = '--%';
+    document.getElementById('ai-kpi-tug-delta').textContent = 'TUG: -- s';
+    document.getElementById('ai-kpi-overdrainage').textContent = '--';
+
+    document.getElementById('ai-prob-val-inph').textContent = '0%';
+    document.getElementById('ai-bar-inph').style.width = '0%';
+    document.getElementById('ai-prob-val-lova').textContent = '0%';
+    document.getElementById('ai-bar-lova').style.width = '0%';
+    document.getElementById('ai-prob-val-atrophy').textContent = '0%';
+    document.getElementById('ai-bar-atrophy').style.width = '0%';
+    document.getElementById('ai-prob-val-obstr').textContent = '0%';
+    document.getElementById('ai-bar-obstr').style.width = '0%';
+
+    document.getElementById('ai-differential-rationale').textContent = 'Select an active patient to compute multimodal posterior probabilities.';
+    const synthEl = document.getElementById('ai-synthesis-text');
+    if (synthEl) synthEl.innerText = 'No patient currently active. Select a patient from the header selector to generate full MDT synthesis.';
+    return;
+  }
+
+  // 1. Probabilities
+  const diff = AIEngine.computeDifferentialProbabilities(patient);
+  verdictEl.textContent = diff.primaryVerdict;
+  if (confEl) confEl.textContent = `Confidence: ${diff.confidence}`;
+
+  document.getElementById('ai-prob-val-inph').textContent = `${diff.inph}%`;
+  document.getElementById('ai-bar-inph').style.width = `${diff.inph}%`;
+
+  document.getElementById('ai-prob-val-lova').textContent = `${diff.lova}%`;
+  document.getElementById('ai-bar-lova').style.width = `${diff.lova}%`;
+
+  document.getElementById('ai-prob-val-atrophy').textContent = `${diff.atrophy}%`;
+  document.getElementById('ai-bar-atrophy').style.width = `${diff.atrophy}%`;
+
+  document.getElementById('ai-prob-val-obstr').textContent = `${diff.obstructive}%`;
+  document.getElementById('ai-bar-obstr').style.width = `${diff.obstructive}%`;
+
+  document.getElementById('ai-differential-rationale').textContent = diff.rationale;
+
+  // 2. Shunt Responsiveness & Trajectory
+  const shunt = AIEngine.predictShuntResponsiveness(patient);
+  if (shunt) {
+    document.getElementById('ai-kpi-shunt-score').textContent = `${shunt.score}%`;
+    document.getElementById('ai-kpi-shunt-category').textContent = shunt.category;
+    document.getElementById('ai-kpi-gait-gain').textContent = `+${shunt.predictedGaitGain}%`;
+    document.getElementById('ai-kpi-tug-delta').textContent = `TUG: -${shunt.predictedTugReduction}s`;
+    document.getElementById('ai-kpi-overdrainage').textContent = shunt.overdrainageRisk;
+    document.getElementById('ai-kpi-overdrainage').style.color = shunt.overdrainageColor;
+
+    document.getElementById('ai-metric-tap-delta').textContent = `${shunt.tapDelta}%`;
+    document.getElementById('ai-metric-gait-pct').textContent = `+${shunt.predictedGaitGain}%`;
+    document.getElementById('ai-metric-tug-time').textContent = `-${shunt.predictedTugReduction} s`;
+    document.getElementById('ai-metric-moca-pts').textContent = `+${shunt.predictedMocaGain} pts`;
+    document.getElementById('ai-metric-continence').textContent = `${shunt.predictedContinenceRate}%`;
+    document.getElementById('ai-metric-hygroma').textContent = shunt.overdrainageRisk;
+    document.getElementById('ai-metric-hygroma').style.color = shunt.overdrainageColor;
+  }
+
+  // 3. XAI Feature List
+  const xaiList = AIEngine.getExplainableFeatures(patient);
+  const xaiContainer = document.getElementById('ai-xai-feature-container');
+  if (xaiContainer) {
+    xaiContainer.innerHTML = xaiList.map(f => `
+      <div class="ai-xai-item">
+        <div>
+          <span style="font-weight:600; color:var(--text-main);">${escapeHtml(f.name)}</span>
+          <div style="font-size:0.72rem; color:var(--text-muted);">${escapeHtml(f.desc)}</div>
+        </div>
+        <span class="${f.dir === 'pos' ? 'ai-xai-weight-pos' : 'ai-xai-weight-neg'}">${escapeHtml(f.weight)}</span>
+      </div>
+    `).join('');
+  }
+
+  // 4. Valve Settings
+  const valve = AIEngine.recommendValveSettings(patient);
+  if (valve) {
+    document.getElementById('ai-rec-dp').textContent = `${valve.recDpMmH2O} mm`;
+    document.getElementById('ai-rec-dp-sub').textContent = `Strata ${valve.strataEquivalent} / proGAV ${Math.round(valve.recDpMmH2O / 10)}cm`;
+    document.getElementById('ai-rec-ag').textContent = `${valve.recAgCmH2O} cm`;
+    document.getElementById('ai-rec-ag-sub').textContent = `Miethke proSA / Gravity Unit (${valve.recAgCmH2O} cmH2O)`;
+    document.getElementById('ai-rec-hardware').textContent = valve.recommendedModel;
+    document.getElementById('ai-rec-valve-rationale').textContent = valve.rationale;
+  }
+
+  // 5. Synthesis text
+  const synthText = AIEngine.generateClinicalSynthesis(patient);
+  const synthEl = document.getElementById('ai-synthesis-text');
+  if (synthEl) {
+    synthEl.innerText = synthText;
+  }
+};
+
+window.copyAISynthesis = function() {
+  const el = document.getElementById('ai-synthesis-text');
+  if (el) {
+    navigator.clipboard.writeText(el.innerText).then(() => {
+      alert('AI Multidisciplinary Clinical Synthesis copied to clipboard.');
+    });
+  }
+};
+
+window.handleAICustomQuery = function(query) {
+  const outputEl = document.getElementById('ai-query-output');
+  if (!outputEl) return;
+  const p = AppState.activePatientData;
+  if (!p) {
+    outputEl.textContent = 'Please select a patient first to query clinical intelligence.';
+    return;
+  }
+  if (!window.AIEngine) {
+    outputEl.textContent = 'AI Engine not initialized.';
+    return;
+  }
+
+  outputEl.textContent = 'Analyzing patient records and computing inference...';
+  setTimeout(() => {
+    const resp = AIEngine.answerPatientQuery(p, query);
+    outputEl.textContent = resp;
+  }, 100);
 };

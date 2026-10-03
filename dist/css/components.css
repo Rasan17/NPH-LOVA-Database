@@ -964,3 +964,217 @@
     display: none !important;
   }
 }
+
+/* =========================================================================
+   AI CLINICAL INTELLIGENCE STYLES
+   ========================================================================= */
+.ai-card-glow {
+  border-top: 3px solid var(--accent-csf-glow);
+  position: relative;
+}
+
+.ai-card-glow-purple {
+  border-top: 3px solid var(--accent-lova);
+}
+
+.ai-prob-row {
+  margin-bottom: 1rem;
+}
+
+.ai-prob-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.ai-prob-title {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-prob-val {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ai-prob-track {
+  height: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  position: relative;
+}
+
+.ai-prob-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-fill-inph {
+  background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.ai-fill-lova {
+  background: linear-gradient(90deg, #7c3aed 0%, #c084fc 100%);
+  box-shadow: 0 0 10px rgba(192, 132, 252, 0.4);
+}
+
+.ai-fill-atrophy {
+  background: linear-gradient(90deg, #475569 0%, #94a3b8 100%);
+}
+
+.ai-fill-obstr {
+  background: linear-gradient(90deg, #d97706 0%, #fcd34d 100%);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+}
+
+.ai-grid-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.85rem;
+}
+
+.ai-metric-tile {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem;
+  transition: border-color var(--transition-fast);
+}
+
+.ai-metric-tile:hover {
+  border-color: var(--border-strong);
+}
+
+.ai-metric-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.ai-metric-value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  margin-top: 4px;
+}
+
+.ai-metric-sub {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.ai-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 0.85rem;
+}
+
+.ai-chip {
+  background: rgba(2, 132, 199, 0.12);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  color: var(--accent-csf-glow);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.ai-chip:hover {
+  background: rgba(2, 132, 199, 0.25);
+  border-color: var(--accent-csf-glow);
+  transform: translateY(-1px);
+}
+
+.ai-query-console {
+  background: #090e1a;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  font-family: var(--font-main);
+  position: relative;
+  min-height: 180px;
+}
+
+.ai-console-output {
+  color: var(--text-main);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  max-height: 380px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+}
+
+.ai-synthesis-preview {
+  background: #0b1222;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: #e2e8f0;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.ai-synthesis-preview h4 {
+  color: var(--accent-csf-glow);
+  font-size: 0.95rem;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  padding-bottom: 2px;
+}
+
+.ai-synthesis-preview h4:first-child {
+  margin-top: 0;
+}
+
+.ai-xai-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ai-xai-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.ai-xai-weight-pos {
+  color: var(--accent-success);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.ai-xai-weight-neg {
+  color: var(--accent-danger);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}

@@ -179,7 +179,7 @@ body {
 }
 
 /* Dossier Tabs Navigation */
-.dossier-tabs {
+.dossier-tabs, .tabs-nav {
   display: flex;
   background: var(--bg-surface-elevated);
   border-bottom: 1px solid var(--border-subtle);
@@ -189,7 +189,7 @@ body {
   gap: 2px;
 }
 
-.dossier-tab-btn {
+.dossier-tab-btn, .tab-btn {
   padding: 0.75rem 1rem;
   font-size: 0.85rem;
   font-weight: 600;
@@ -205,12 +205,12 @@ body {
   transition: all var(--transition-fast);
 }
 
-.dossier-tab-btn:hover {
+.dossier-tab-btn:hover, .tab-btn:hover {
   color: var(--text-main);
   background: rgba(255, 255, 255, 0.03);
 }
 
-.dossier-tab-btn.active {
+.dossier-tab-btn.active, .tab-btn.active {
   color: var(--accent-csf-glow);
   border-bottom-color: var(--accent-csf-glow);
   background: rgba(2, 132, 199, 0.08);

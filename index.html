@@ -189,6 +189,7 @@
       <button class="tab-btn" data-tab="tab-outcomes">10. Outcomes & Satisfaction</button>
       <button class="tab-btn" data-tab="tab-complications">11. Complications & Revisions</button>
       <button class="tab-btn" data-tab="tab-cohort">12. Cohort Analytics</button>
+      <button class="tab-btn" data-tab="tab-ai">13. AI</button>
     </nav>
 
     <!-- Tab Panels Container -->
@@ -1992,6 +1993,245 @@
         </div>
       </section>
 
+    
+
+      <!-- TAB 13: AI CLINICAL INTELLIGENCE -->
+      <section class="tab-panel" id="tab-ai">
+        <div class="panel-header-flex">
+          <div>
+            <h2>13. AI Clinical Intelligence & Multimodal Decision Support</h2>
+            <p class="panel-description">Deep Bayesian differential classification, quantitative shunt responsiveness prediction, automated hydrodynamics valve optimization, and generative MDT clinical synthesis.</p>
+          </div>
+          <div class="header-btn-group">
+            <button type="button" id="btn-recalc-ai" class="btn btn-primary" title="Recompute multimodal AI probabilities and trajectories">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              Run AI Prognostics
+            </button>
+            <button type="button" id="btn-gen-ai-synthesis" class="btn btn-secondary" title="Synthesize publication-grade MDT case summary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              Synthesize MDT Note
+            </button>
+            <button type="button" id="btn-copy-ai-synthesis" class="btn btn-secondary" title="Copy AI Clinical Synthesis to clipboard">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              Copy Report
+            </button>
+          </div>
+        </div>
+
+        <!-- Executive AI KPI Ribbon -->
+        <div class="analytics-kpi-grid mt-3">
+          <div class="kpi-card ai-card-glow">
+            <div class="kpi-title">Primary AI Diagnosis</div>
+            <div class="kpi-number text-csf" style="font-size:1.15rem;" id="ai-kpi-verdict">--</div>
+            <div class="kpi-subtext" id="ai-kpi-confidence">Confidence: --</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Predicted Shunt Response</div>
+            <div class="kpi-number text-emerald" id="ai-kpi-shunt-score">--%</div>
+            <div class="kpi-subtext" id="ai-kpi-shunt-category">Evaluating likelihood</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Projected 6-Mo Gait Gain</div>
+            <div class="kpi-number text-csf" id="ai-kpi-gait-gain">--%</div>
+            <div class="kpi-subtext" id="ai-kpi-tug-delta">TUG: -- sec</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Overdrainage / Hygroma Risk</div>
+            <div class="kpi-number text-amber" style="font-size:1.05rem;" id="ai-kpi-overdrainage">--</div>
+            <div class="kpi-subtext">Compliance & Mantle Collapse</div>
+          </div>
+        </div>
+
+        <!-- Section 1: Differential Probabilities & Shunt Responsiveness -->
+        <div class="form-grid-2 mt-4">
+          <!-- Card 1: Multimodal Bayesian Differential -->
+          <div class="card ai-card-glow">
+            <div class="card-header">
+              <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-csf"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                Multimodal Bayesian Differential Classifier
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="ai-prob-row">
+                <div class="ai-prob-meta">
+                  <span class="ai-prob-title text-csf">Idiopathic NPH (iNPH)</span>
+                  <span class="ai-prob-val text-csf" id="ai-prob-val-inph">0%</span>
+                </div>
+                <div class="ai-prob-track">
+                  <div class="ai-prob-fill ai-fill-inph" id="ai-bar-inph" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="ai-prob-row">
+                <div class="ai-prob-meta">
+                  <span class="ai-prob-title text-lova">Adult LOVA (Long-Standing Overt Ventriculomegaly)</span>
+                  <span class="ai-prob-val text-lova" id="ai-prob-val-lova">0%</span>
+                </div>
+                <div class="ai-prob-track">
+                  <div class="ai-prob-fill ai-fill-lova" id="ai-bar-lova" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="ai-prob-row">
+                <div class="ai-prob-meta">
+                  <span class="ai-prob-title text-secondary">Ex-Vacuo Ventriculomegaly / Neurodegenerative Atrophy</span>
+                  <span class="ai-prob-val text-secondary" id="ai-prob-val-atrophy">0%</span>
+                </div>
+                <div class="ai-prob-track">
+                  <div class="ai-prob-fill ai-fill-atrophy" id="ai-bar-atrophy" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="ai-prob-row">
+                <div class="ai-prob-meta">
+                  <span class="ai-prob-title text-amber">Secondary / Obstructive Aqueductal Stenosis</span>
+                  <span class="ai-prob-val text-amber" id="ai-prob-val-obstr">0%</span>
+                </div>
+                <div class="ai-prob-track">
+                  <div class="ai-prob-fill ai-fill-obstr" id="ai-bar-obstr" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="mt-3 p-3" style="background:var(--bg-surface-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-sm);">
+                <div class="text-xs font-semibold text-muted uppercase">Diagnostic Rationale & Biomechanical Basis</div>
+                <div class="text-sm mt-1" id="ai-differential-rationale" style="line-height:1.5;">--</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Shunt Responsiveness & Trajectory Forecaster -->
+          <div class="card ai-card-glow-purple">
+            <div class="card-header">
+              <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-lova"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                Shunt Responsiveness & 6-Month Trajectory Forecaster
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="ai-grid-metrics">
+                <div class="ai-metric-tile">
+                  <div class="ai-metric-label">Tap Test Delta</div>
+                  <div class="ai-metric-value text-csf" id="ai-metric-tap-delta">--%</div>
+                  <div class="ai-metric-sub">Pre/Post Walk Speed</div>
+                </div>
+                <div class="ai-metric-tile">
+                  <div class="ai-metric-label">Projected Gait Gain</div>
+                  <div class="ai-metric-value text-emerald" id="ai-metric-gait-pct">+--%</div>
+                  <div class="ai-metric-sub">10m Velocity Increase</div>
+                </div>
+                <div class="ai-metric-tile">
+                  <div class="ai-metric-label">TUG Test Reduction</div>
+                  <div class="ai-metric-value text-csf" id="ai-metric-tug-time">--- s</div>
+                  <div class="ai-metric-sub">Mobility Time Delta</div>
+                </div>
+                <div class="ai-metric-tile">
+                  <div class="ai-metric-label">Cognitive (MoCA) Delta</div>
+                  <div class="ai-metric-value text-lova" id="ai-metric-moca-pts">+-- pts</div>
+                  <div class="ai-metric-sub">Executive / Attention</div>
+                </div>
+                <div class="ai-metric-tile">
+                  <div class="ai-metric-label">Continence Resolution</div>
+                  <div class="ai-metric-value text-emerald" id="ai-metric-continence">--%</div>
+                  <div class="ai-metric-sub">Projected at 6 Months</div>
+                </div>
+                <div class="ai-metric-tile">
+                  <div class="ai-metric-label">Hygroma Risk</div>
+                  <div class="ai-metric-value text-amber" style="font-size:1.05rem;" id="ai-metric-hygroma">--</div>
+                  <div class="ai-metric-sub">Subdural Overdrainage</div>
+                </div>
+              </div>
+
+              <!-- Explainable Factors List -->
+              <div class="mt-3">
+                <div class="text-xs font-semibold text-muted uppercase mb-2">Explainable AI (XAI) Weight Distribution</div>
+                <div class="ai-xai-list" id="ai-xai-feature-container">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Valve Settings Advisor & Case Synthesizer -->
+        <div class="form-grid-2 mt-4">
+          <!-- Card 3: AI Valve Selection & Hydrodynamics Optimizer -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                AI Valve &amp; Hydrodynamics Recommender
+              </h3>
+            </div>
+            <div class="card-body">
+              <div class="form-grid-2">
+                <div class="score-badge-card">
+                  <div class="score-badge-val text-csf" id="ai-rec-dp">120 mm</div>
+                  <div class="score-badge-lbl">RECOMMENDED INITIAL DP (mmH2O)</div>
+                  <div class="text-xs text-muted mt-1" id="ai-rec-dp-sub">Strata Level 2.0 / proGAV 12cm</div>
+                </div>
+                <div class="score-badge-card">
+                  <div class="score-badge-val text-lova" id="ai-rec-ag">20 cm</div>
+                  <div class="score-badge-lbl">ANTI-GRAVITY / GRAVITATIONAL UNIT</div>
+                  <div class="text-xs text-muted mt-1" id="ai-rec-ag-sub">Calculated for upright posture</div>
+                </div>
+              </div>
+
+              <div class="mt-3 p-3" style="background:var(--bg-surface-elevated); border:1px solid var(--border-subtle); border-radius:var(--radius-sm);">
+                <div class="text-xs font-semibold text-muted uppercase">Recommended Valve Hardware Architecture</div>
+                <div class="text-sm font-semibold text-csf mt-1" id="ai-rec-hardware">--</div>
+                <div class="text-xs text-secondary mt-2" id="ai-rec-valve-rationale" style="line-height:1.5;">--</div>
+              </div>
+
+              <!-- Interactive Clinical AI Assistant (Prompt Chips + Free Text) -->
+              <div class="mt-4">
+                <h4 style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin-bottom:0.5rem; display:flex; align-items:center; gap:6px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-csf"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                  Patient-Grounded Clinical AI Query Assistant
+                </h4>
+                <div class="ai-chip-group">
+                  <button type="button" class="ai-chip" data-ai-query="Evaluate Shunt vs ETV indication">🧠 Shunt vs ETV Indication</button>
+                  <button type="button" class="ai-chip" data-ai-query="Analyze Callosal Angle & Evans Index">📐 Callosal Angle & Evans</button>
+                  <button type="button" class="ai-chip" data-ai-query="Assess Subdural Overdrainage Risk">⚠️ Overdrainage Risk</button>
+                  <button type="button" class="ai-chip" data-ai-query="Evaluate Metformin & Glymphatic impact">💊 Metformin & Glymphatics</button>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <input type="text" id="ai-query-input" class="form-control" placeholder="Ask AI Assistant about this patient's hydrodynamics, diagnosis..." style="flex:1;" />
+                  <button type="button" id="btn-submit-ai-query" class="btn btn-primary">Ask AI</button>
+                </div>
+                <div class="ai-query-console mt-2">
+                  <div class="ai-console-output" id="ai-query-output">Select a quick prompt chip or enter a query above to interrogate active patient data.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 4: Generative Clinical AI Case Synthesizer -->
+          <div class="card">
+            <div class="card-header-flex">
+              <h3 class="card-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-emerald"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Generative MDT Clinical Synthesis &amp; Consensus Report
+              </h3>
+              <div class="btn-group">
+                <button type="button" class="btn btn-ghost btn-xs" id="btn-refresh-synthesis" title="Regenerate synthesis from updated patient data">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                  Refresh
+                </button>
+                <button type="button" class="btn btn-secondary btn-xs" id="btn-copy-synthesis-text">
+                  Copy Note
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="ai-synthesis-preview" id="ai-synthesis-text">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <!-- Modals -->
@@ -3132,6 +3372,7 @@
   <script src="js/schema.js"></script>
   <script src="js/scoring-engines.js"></script>
   <script src="js/db-adapter.js"></script>
+  <script src="js/ai-engine.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
